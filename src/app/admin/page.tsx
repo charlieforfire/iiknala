@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ZoomButton from '@/components/admin/ZoomButton'
 import ConfirmCashButton from '@/components/admin/ConfirmCashButton'
+import EditClassForm from '@/components/admin/EditClassForm'
 
 const ADMIN_EMAIL = 'iiknalayoga@gmail.com'
 
@@ -70,6 +71,7 @@ export default async function AdminPage() {
                   />
                 </div>
                 <ZoomButton classId={cls.id} currentZoomLink={cls.zoom_link} />
+                <EditClassForm cls={cls} />
               </div>
             )
           })}
