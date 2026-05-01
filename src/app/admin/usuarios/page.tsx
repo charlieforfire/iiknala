@@ -15,17 +15,19 @@ export default async function UsuariosPage() {
 
   const { data: { users } } = await adminDb.auth.admin.listUsers({ perPage: 200 })
 
-  // Contar reservas por usuario
-  const { data: bookingCounts } = await adminDb
-    .from('bookings')
-    .select('user_id, status')
+  const [bookingCountsRes, activePackagesRes] = await Promise.all([
+    adminDb.from('bookings').select('user_id, status'),
+    adminDb.from('user_packages').select('user_id').eq('status', 'active'),
+  ])
 
   const countMap: Record<string, { total: number; pending: number }> = {}
-  for (const b of bookingCounts ?? []) {
+  for (const b of bookingCountsRes.data ?? []) {
     if (!countMap[b.user_id]) countMap[b.user_id] = { total: 0, pending: 0 }
     countMap[b.user_id].total++
     if (b.status === 'pending_cash') countMap[b.user_id].pending++
   }
+
+  const activeUserIds = new Set((activePackagesRes.data ?? []).map((p: any) => p.user_id))
 
   const sorted = [...users].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -60,15 +62,22 @@ export default async function UsuariosPage() {
           const name = u.user_metadata?.full_name ?? '—'
           const counts = countMap[u.id] ?? { total: 0, pending: 0 }
           const fecha = new Date(u.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+          const hasActive = activeUserIds.has(u.id)
           return (
             <Link
               key={u.id}
               href={`/admin/usuarios/${u.id}`}
               className="grid grid-cols-4 px-6 py-4 border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors"
             >
-              <div className="col-span-2">
-                <p className="text-stone-800 font-medium text-sm">{name}</p>
-                <p className="text-stone-400 text-xs">{u.email}</p>
+              <div className="col-span-2 flex items-center gap-3">
+                <span
+                  className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${hasActive ? 'bg-emerald-500' : 'bg-red-400'}`}
+                  title={hasActive ? 'Paquete activo' : 'Sin paquete activo'}
+                />
+                <div>
+                  <p className="text-stone-800 font-medium text-sm">{name}</p>
+                  <p className="text-stone-400 text-xs">{u.email}</p>
+                </div>
               </div>
               <p className="text-stone-500 text-sm self-center">{fecha}</p>
               <div className="text-right self-center">

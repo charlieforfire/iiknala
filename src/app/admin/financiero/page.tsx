@@ -47,17 +47,25 @@ export default async function FinancieroPage() {
   const purchases = purchasesRes.data ?? []
   const cashBookings = cashBookingsRes.data ?? []
 
-  // Stripe packages: solo los que tienen stripe_session_id
   const stripePackages = packages.filter((p: any) => p.stripe_session_id)
+
+  // Enriquecer paquetes Stripe con info del usuario
+  const stripePackagesWithUser = await Promise.all(
+    stripePackages.map(async (p: any) => {
+      const { data } = await adminDb.auth.admin.getUserById(p.user_id)
+      return {
+        ...p,
+        userEmail: data.user?.email ?? p.user_id,
+        userName: data.user?.user_metadata?.full_name ?? null,
+      }
+    })
+  )
+
   const stripePackagesTotal = stripePackages.reduce((sum: number, p: any) => {
     return sum + (packagePrices[p.package_id] ?? 0)
   }, 0)
 
-  // Stripe formations: $36,500 o $6,000 (no tenemos el monto guardado, usamos count)
-  const formacionesTotal = purchases.length * 6000 // mínimo inscripción
-
-  const totalStripe = stripePackagesTotal + formacionesTotal
-  const totalEfectivo = cashBookings.length // solo conteo
+  const totalEfectivo = cashBookings.length
 
   const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
   const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -103,28 +111,49 @@ export default async function FinancieroPage() {
       {/* Paquetes Stripe este mes */}
       <section className="mb-10">
         <h3 className="text-base font-semibold text-stone-700 mb-4">Paquetes vendidos este mes (Stripe)</h3>
-        {stripePackages.length === 0 ? (
+        {stripePackagesWithUser.length === 0 ? (
           <p className="text-stone-400 text-sm">Sin ventas este mes.</p>
         ) : (
           <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
-            <div className="grid grid-cols-3 bg-stone-50 border-b border-stone-200 px-6 py-3 text-xs font-medium text-stone-500 uppercase tracking-wide">
+            <div className="grid grid-cols-4 bg-stone-50 border-b border-stone-200 px-6 py-3 text-xs font-medium text-stone-500 uppercase tracking-wide">
+              <span className="col-span-1">Usuario</span>
               <span>Paquete</span>
-              <span>Fecha</span>
+              <span className="text-center">Clases restantes</span>
               <span className="text-right">Monto</span>
             </div>
-            {stripePackages.map((p: any) => (
-              <div key={p.id} className="grid grid-cols-3 px-6 py-4 border-b border-stone-100 last:border-0 text-sm">
-                <p className="text-stone-700">{p.package_name}</p>
-                <p className="text-stone-400">
-                  {new Date(p.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
-                </p>
-                <p className="text-stone-800 font-medium text-right">
-                  ${(packagePrices[p.package_id] ?? 0).toLocaleString('es-MX')}
-                </p>
-              </div>
-            ))}
-            <div className="grid grid-cols-3 px-6 py-4 bg-stone-50 text-sm font-semibold">
-              <span className="text-stone-600 col-span-2">Total</span>
+            {stripePackagesWithUser.map((p: any) => {
+              const restantes = p.classes_total === null ? null : (p.classes_total - p.classes_used)
+              const isActive = p.status === 'active'
+              return (
+                <div key={p.id} className="grid grid-cols-4 px-6 py-4 border-b border-stone-100 last:border-0 text-sm items-center">
+                  <div className="col-span-1">
+                    {p.userName && <p className="text-stone-800 font-medium">{p.userName}</p>}
+                    <p className="text-stone-400 text-xs">{p.userEmail}</p>
+                  </div>
+                  <div>
+                    <p className="text-stone-700">{p.package_name}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-500'}`}>
+                      {isActive ? 'Activo' : p.status === 'exhausted' ? 'Agotado' : 'Expirado'}
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    {restantes === null ? (
+                      <span className="text-stone-400 text-xs">Ilimitado</span>
+                    ) : (
+                      <div>
+                        <p className="text-stone-800 font-medium">{restantes}</p>
+                        <p className="text-stone-400 text-xs">de {p.classes_total}</p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-stone-800 font-medium text-right">
+                    ${(packagePrices[p.package_id] ?? 0).toLocaleString('es-MX')}
+                  </p>
+                </div>
+              )
+            })}
+            <div className="grid grid-cols-4 px-6 py-4 bg-stone-50 text-sm font-semibold">
+              <span className="text-stone-600 col-span-3">Total</span>
               <span className="text-stone-800 text-right">${stripePackagesTotal.toLocaleString('es-MX')} MXN</span>
             </div>
           </div>
