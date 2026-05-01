@@ -110,7 +110,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusBadge status={booking.status} />
-                  {booking.status === 'confirmed' && booking.yoga_class && (
+                  {['confirmed', 'pending_cash'].includes(booking.status) && booking.yoga_class && (
                     <CancelButton
                       bookingId={booking.id}
                       classDate={booking.yoga_class.date}
@@ -155,6 +155,7 @@ function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     confirmed: 'bg-emerald-100 text-[#4a6741]',
     completed: 'bg-emerald-100 text-[#4a6741]',
+    pending_cash: 'bg-amber-100 text-amber-700',
     pending: 'bg-yellow-100 text-yellow-700',
     cancelled: 'bg-stone-100 text-stone-500',
     refunded: 'bg-red-100 text-red-600',
@@ -162,6 +163,7 @@ function StatusBadge({ status }: { status: string }) {
   const labels: Record<string, string> = {
     confirmed: 'Confirmada',
     completed: 'Completada',
+    pending_cash: 'Pago en estudio',
     pending: 'Pendiente',
     cancelled: 'Cancelada',
     refunded: 'Reembolsada',

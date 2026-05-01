@@ -7,7 +7,7 @@ const admin = createAdmin(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
@@ -16,14 +16,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { data: booking } = await supabase
     .from('bookings')
-    .select('class_id')
+    .select('class_id, status')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
 
   if (!booking) return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
 
-  // Verificar si la clase es en más de 24 horas
   const { data: cls } = await supabase
     .from('yoga_classes')
     .select('date, time, enrolled')
@@ -33,12 +32,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   // Cancelar la reserva
   await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', id)
 
-  // Reducir ocupación de la clase
+  // Reducir ocupación
   if (cls && cls.enrolled > 0) {
     await admin.from('yoga_classes').update({ enrolled: cls.enrolled - 1 }).eq('id', booking.class_id)
   }
 
-  // Siempre devolver crédito al paquete
+  // Solo devolver crédito si era una reserva con paquete (confirmed), no si era pending_cash
+  if (booking.status === 'pending_cash') {
+    return NextResponse.json({ ok: true, creditRefunded: false })
+  }
+
   const today = new Date().toISOString().split('T')[0]
   const { data: activePkg } = await admin
     .from('user_packages')

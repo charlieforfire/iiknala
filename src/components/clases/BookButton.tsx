@@ -13,9 +13,9 @@ interface Props {
   hasPackage: boolean
 }
 
-export default function BookButton({ classId, price, isBooked, isFull, isLoggedIn, hasPackage }: Props) {
+export default function BookButton({ classId, isBooked, isFull, isLoggedIn, hasPackage }: Props) {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<'package' | 'cash' | null>(null)
   const [error, setError] = useState('')
 
   if (isBooked) {
@@ -45,22 +45,16 @@ export default function BookButton({ classId, price, isBooked, isFull, isLoggedI
     )
   }
 
-  if (!hasPackage) {
-    return (
-      <Link
-        href="/paquetes"
-        className="w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-medium text-sm transition-colors text-center block"
-      >
-        Comprar paquete para reservar
-      </Link>
-    )
-  }
-
-  async function handleBook() {
-    setLoading(true)
+  async function handleBook(type: 'package' | 'cash') {
+    if (type === 'package' && !hasPackage) {
+      router.push('/paquetes')
+      return
+    }
+    setLoading(type)
     setError('')
     try {
-      const res = await fetch('/api/reservas', {
+      const endpoint = type === 'cash' ? '/api/reservas/cash' : '/api/reservas'
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ classId }),
@@ -71,18 +65,34 @@ export default function BookButton({ classId, price, isBooked, isFull, isLoggedI
     } catch (e: any) {
       setError(e.message ?? 'Error al reservar')
     } finally {
-      setLoading(false)
+      setLoading(null)
     }
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-2">
+      {hasPackage ? (
+        <button
+          onClick={() => handleBook('package')}
+          disabled={loading !== null}
+          className="w-full py-3 rounded-xl bg-[#4a6741] hover:bg-[#3a5232] disabled:opacity-60 text-white font-medium text-sm transition-colors"
+        >
+          {loading === 'package' ? 'Reservando...' : 'Reservar con paquete'}
+        </button>
+      ) : (
+        <Link
+          href="/paquetes"
+          className="w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-medium text-sm transition-colors text-center block"
+        >
+          Comprar paquete para reservar
+        </Link>
+      )}
       <button
-        onClick={handleBook}
-        disabled={loading}
-        className="w-full py-3 rounded-xl bg-[#4a6741] hover:bg-[#3a5232] disabled:opacity-60 text-white font-medium text-sm transition-colors"
+        onClick={() => handleBook('cash')}
+        disabled={loading !== null}
+        className="w-full py-2.5 rounded-xl border border-stone-300 hover:border-stone-400 disabled:opacity-60 text-stone-600 font-medium text-sm transition-colors"
       >
-        {loading ? 'Reservando...' : 'Reservar lugar'}
+        {loading === 'cash' ? 'Reservando...' : 'Reservar y pagar en estudio'}
       </button>
       {error && <p className="text-red-500 text-xs text-center">{error}</p>}
     </div>

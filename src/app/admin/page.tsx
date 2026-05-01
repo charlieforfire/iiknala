@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ZoomButton from '@/components/admin/ZoomButton'
+import ConfirmCashButton from '@/components/admin/ConfirmCashButton'
 
 const ADMIN_EMAIL = 'iiknalayoga@gmail.com'
 
@@ -26,6 +27,12 @@ export default async function AdminPage() {
     .eq('status', 'confirmed')
     .order('created_at', { ascending: false })
     .limit(50)
+
+  const { data: pendingCash } = await supabase
+    .from('bookings')
+    .select('*, yoga_class:yoga_classes(title, date, time)')
+    .eq('status', 'pending_cash')
+    .order('created_at', { ascending: false })
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-16">
@@ -67,6 +74,38 @@ export default async function AdminPage() {
             )
           })}
         </div>
+      </section>
+
+      {/* Pagos pendientes en estudio */}
+      <section className="mb-16">
+        <h2 className="text-lg font-medium text-stone-700 mb-6">
+          Pago en estudio pendiente
+          {(pendingCash ?? []).length > 0 && (
+            <span className="ml-2 bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+              {(pendingCash ?? []).length}
+            </span>
+          )}
+        </h2>
+        {(pendingCash ?? []).length === 0 ? (
+          <p className="text-stone-400 text-sm">Sin pagos pendientes.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {(pendingCash ?? []).map((b: any) => {
+              const d = b.yoga_class ? new Date(b.yoga_class.date + 'T12:00:00') : null
+              const label = d ? `${diasSemana[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} · ${b.yoga_class.time.slice(0,5)}` : '—'
+              return (
+                <div key={b.id} className="bg-white rounded-xl border border-amber-200 p-4 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium text-stone-800">{b.yoga_class?.title ?? '—'}</p>
+                    <p className="text-xs text-stone-400 mt-0.5">{label}</p>
+                    <p className="text-xs text-stone-400 mt-0.5 font-mono">{b.user_id}</p>
+                  </div>
+                  <ConfirmCashButton bookingId={b.id} />
+                </div>
+              )
+            })}
+          </div>
+        )}
       </section>
 
       {/* Últimas reservas */}
