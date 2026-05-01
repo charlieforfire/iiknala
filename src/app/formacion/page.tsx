@@ -98,7 +98,7 @@ export default async function FormacionPage() {
       {/* Hero */}
       <div className="relative h-[70vh] min-h-[500px] flex items-end">
         <Image
-          src="/hero-certificacion.jpg"
+          src="/hero.jpg"
           alt="YTT iiknala"
           fill
           className="object-cover object-center"
