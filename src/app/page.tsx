@@ -123,7 +123,7 @@ export default async function HomePage() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-stone-900 text-white">
         <div
           className="absolute inset-0"
-          style={{ backgroundImage: "url('/hero-bg.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}
+          style={{ backgroundImage: "url('/hero-bg-upscaled-4K.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
         <div className="relative z-10 text-center max-w-3xl mx-auto px-6">
