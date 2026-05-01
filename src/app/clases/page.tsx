@@ -43,6 +43,7 @@ export default async function ClasesPage() {
 
   const bookedIds = new Set((myBookings ?? []).map(b => b.class_id))
   const hasPackage = !!myPackage
+  const waiverAccepted = user?.user_metadata?.waiver_accepted === true
   const grouped = groupByDate((classes ?? []) as YogaClass[])
 
   return (
@@ -97,10 +98,14 @@ export default async function ClasesPage() {
                         <div className="sm:min-w-[160px]">
                           <BookButton
                             classId={cls.id}
-                            price={cls.price}
+                            classTitle={cls.title}
+                            classDate={cls.date}
+                            classTime={cls.time}
+                            instructor={cls.instructor}
                             isBooked={bookedIds.has(cls.id)}
                             isFull={isFull}
                             isLoggedIn={!!user}
+                            waiverAccepted={waiverAccepted}
                             hasPackage={hasPackage}
                           />
                         </div>
