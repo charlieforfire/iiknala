@@ -113,9 +113,11 @@ export default async function AdminPage() {
                 </div>
                 <ZoomButton classId={cls.id} currentZoomLink={cls.zoom_link} />
                 <EditClassForm cls={cls} />
-                <Link href={`/admin/clases/${cls.id}`} className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 mt-2 transition-colors">
-                  Ver alumnos →
-                </Link>
+                <div className="flex justify-end mt-2">
+                  <Link href={`/admin/clases/${cls.id}`} className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors">
+                    Ver alumnos →
+                  </Link>
+                </div>
               </div>
             )
           })}
