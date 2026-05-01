@@ -80,10 +80,6 @@ export default function BuyButton({ formationId, hasPurchased, isLoggedIn }: Pro
         {loading === 'parcialidades' ? 'Redirigiendo...' : 'Pago en parcialidades — 7 × $6,000 MXN'}
       </button>
 
-      <p className="text-xs text-stone-400 text-center">
-        Parcialidades: inscripción $6,000 + 6 mensualidades de $6,000
-      </p>
-
       {error && <p className="text-red-600 text-xs text-center">{error}</p>}
     </div>
   )

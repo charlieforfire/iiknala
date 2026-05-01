@@ -306,6 +306,9 @@ export default async function FormacionPage() {
               </div>
             ))}
           </div>
+          <p className="text-stone-500 text-xs mt-6">
+            * Gastos de hospedaje del retiro de graduación no incluidos. Sujeto a disponibilidad y a la tarifa del momento.
+          </p>
         </div>
       </section>
 
