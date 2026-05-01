@@ -42,7 +42,7 @@ export default function BuyButton({ formationId, hasPurchased, isLoggedIn }: Pro
     const precio = isContado ? 3650000 : 600000 // centavos MXN
     const nombre = isContado
       ? 'iiknala YTT 200H — Pago de contado'
-      : 'iiknala YTT 200H — Inscripción (primer pago)'
+      : 'iiknala YTT 200H — Pago en parcialidades (1 de 7)'
 
     try {
       const res = await fetch('/api/stripe/checkout', {
