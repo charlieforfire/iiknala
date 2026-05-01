@@ -2,10 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { isAdminAuthed } from '@/lib/admin-auth'
+import Link from 'next/link'
 import ZoomButton from '@/components/admin/ZoomButton'
 import ConfirmCashButton from '@/components/admin/ConfirmCashButton'
 import EditClassForm from '@/components/admin/EditClassForm'
 import AdminLogout from '@/components/admin/AdminLogout'
+import AdminNav from '@/components/admin/AdminNav'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,6 +76,8 @@ export default async function AdminPage() {
         <AdminLogout />
       </div>
 
+      <AdminNav active="clases" />
+
       {/* Resumen de clases */}
       <section className="mb-16">
         <h2 className="text-lg font-medium text-stone-700 mb-6">Próximas clases — ocupación</h2>
@@ -109,6 +113,9 @@ export default async function AdminPage() {
                 </div>
                 <ZoomButton classId={cls.id} currentZoomLink={cls.zoom_link} />
                 <EditClassForm cls={cls} />
+                <Link href={`/admin/clases/${cls.id}`} className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 mt-2 transition-colors">
+                  Ver alumnos →
+                </Link>
               </div>
             )
           })}
