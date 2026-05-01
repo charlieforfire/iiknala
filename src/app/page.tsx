@@ -51,21 +51,21 @@ const classes = [
     name: 'Dharma Yoga',
     desc: 'Práctica meditativa y filosófica inspirada en la tradición clásica. Lun 7:00 pm.',
     img: '/clase-dharma.jpg',
-    levels: ['avanzado'],
+    levels: ['multinivel'],
   },
   {
     slug: 'slow-flow',
     name: 'Slow Flow',
     desc: 'Vinyasa a ritmo lento para conectar con cada movimiento. Mar y Jue 7:00 pm.',
     img: '/clase-slow-flow.jpg',
-    levels: ['avanzado'],
+    levels: ['multinivel', 'principiantes'],
   },
   {
     slug: 'intuitive',
     name: 'Intuitive Flow',
     desc: 'Movimiento libre guiado por la intuición del cuerpo. Miér 7:00 pm.',
     img: '/clase-intuitive.jpg',
-    levels: ['avanzado'],
+    levels: ['multinivel'],
   },
 ]
 
