@@ -63,6 +63,8 @@ export async function POST(req: NextRequest) {
   }
 
   if (type === 'formation') {
+    const unitAmount = Math.round((precio ?? 3650000))
+    const productName = nombre ?? 'iiknala — Formación de Profesores 200H'
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -70,8 +72,8 @@ export async function POST(req: NextRequest) {
       line_items: [{
         price_data: {
           currency: 'mxn',
-          unit_amount: 1800000,
-          product_data: { name: 'iiknala — Formación de Profesores 200H' },
+          unit_amount: unitAmount,
+          product_data: { name: productName },
         },
         quantity: 1,
       }],
