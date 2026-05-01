@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const { id } = await params
-  const { status } = await req.json()
+  const { status, method } = await req.json()
 
   if (!['confirmed', 'cancelled'].includes(status)) {
     return NextResponse.json({ error: 'Estado inválido' }, { status: 400 })
@@ -27,7 +27,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (!booking) return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
 
-  await adminDb.from('bookings').update({ status }).eq('id', id)
+  const update: Record<string, string> = { status }
+  if (status === 'confirmed' && (method === 'efectivo' || method === 'transferencia')) {
+    update.stripe_payment_intent = method
+  }
+
+  await adminDb.from('bookings').update(update).eq('id', id)
 
   if (status === 'cancelled' && booking.status === 'pending_cash') {
     const { data: cls } = await adminDb

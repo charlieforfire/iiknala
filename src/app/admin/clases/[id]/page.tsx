@@ -106,8 +106,13 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
                   <p className="text-stone-800 text-sm font-medium">{b.userName}</p>
                   <p className="text-stone-400 text-xs">{b.userEmail}</p>
                 </div>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                  {b.stripe_payment_intent ? 'Stripe' : 'Efectivo'}
+                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                  b.stripe_payment_intent?.startsWith('pi_') ? 'bg-purple-100 text-purple-700' :
+                  b.stripe_payment_intent === 'transferencia' ? 'bg-blue-100 text-blue-700' :
+                  'bg-emerald-100 text-emerald-700'
+                }`}>
+                  {b.stripe_payment_intent?.startsWith('pi_') ? 'Stripe' :
+                   b.stripe_payment_intent === 'transferencia' ? 'Transferencia' : 'Efectivo'}
                 </span>
               </div>
             ))}

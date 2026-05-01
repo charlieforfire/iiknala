@@ -133,6 +133,16 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {b.status === 'confirmed' && (
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                        b.stripe_payment_intent?.startsWith('pi_') ? 'bg-purple-100 text-purple-700' :
+                        b.stripe_payment_intent === 'transferencia' ? 'bg-blue-100 text-blue-700' :
+                        'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {b.stripe_payment_intent?.startsWith('pi_') ? 'Stripe' :
+                         b.stripe_payment_intent === 'transferencia' ? 'Transferencia' : 'Efectivo'}
+                      </span>
+                    )}
                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusColor[b.status] ?? 'bg-stone-100 text-stone-500'}`}>
                       {statusLabel[b.status] ?? b.status}
                     </span>
