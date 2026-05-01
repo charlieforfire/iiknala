@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { isAdminAuthed } from '@/lib/admin-auth'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ADMIN_EMAIL = 'iiknalayoga@gmail.com'
-
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!await isAdminAuthed()) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   }
 
@@ -33,7 +29,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   await adminDb.from('bookings').update({ status }).eq('id', id)
 
-  // Si se cancela una reserva pending_cash, liberar el lugar
   if (status === 'cancelled' && booking.status === 'pending_cash') {
     const { data: cls } = await adminDb
       .from('yoga_classes')

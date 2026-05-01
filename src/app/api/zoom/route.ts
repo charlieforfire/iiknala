@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { createZoomMeeting } from '@/lib/zoom'
-
-const ADMIN_EMAIL = 'iiknalayoga@gmail.com'
+import { isAdminAuthed } from '@/lib/admin-auth'
 
 const admin = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,10 +9,7 @@ const admin = createAdmin(
 )
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!await isAdminAuthed()) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
