@@ -131,16 +131,16 @@ export default async function HomePage() {
             Yoga · Wellness · Drills®
           </p>
           <h1 className="text-2xl md:text-3xl font-light mb-3 tracking-wide text-white/90">
-            bienvenido a iiknala yoga
+            Bienvenido a iiknala yoga
           </h1>
           <p className="text-4xl md:text-6xl font-light mb-6 leading-tight">
-            un lugar de paz,<br />un espacio de energía
+            Un lugar de paz,<br />un espacio de energía
           </p>
           <p className="text-base md:text-lg text-stone-300 font-light mb-3 max-w-xl mx-auto leading-relaxed">
-            explora nuestras clases, precios y ubicación
+            Explora nuestras clases, precios y ubicación
           </p>
           <p className="text-sm md:text-base text-stone-400 font-light mb-12 max-w-xl mx-auto leading-relaxed">
-            comienza tu viaje y vuélvete parte de nuestra vibrante comunidad en Mérida, Yucatán
+            Comienza tu viaje y vuélvete parte de nuestra vibrante comunidad en Mérida, Yucatán
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
