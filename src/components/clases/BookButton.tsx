@@ -12,13 +12,12 @@ interface Props {
   isBooked: boolean
   isFull: boolean
   isLoggedIn: boolean
-  waiverAccepted: boolean
   hasPackage: boolean
 }
 
 export default function BookButton({
   classId, classTitle, classDate, classTime, instructor,
-  isBooked, isFull, isLoggedIn, waiverAccepted, hasPackage,
+  isBooked, isFull, isLoggedIn, hasPackage,
 }: Props) {
   const [open, setOpen] = useState(false)
 
@@ -38,8 +37,7 @@ export default function BookButton({
     )
   }
 
-  let initialStep: 'login' | 'waiver' | 'book' = 'login'
-  if (isLoggedIn) initialStep = waiverAccepted ? 'book' : 'waiver'
+  const initialStep: 'login' | 'book' = isLoggedIn ? 'book' : 'login'
 
   return (
     <>

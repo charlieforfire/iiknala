@@ -43,7 +43,6 @@ export default async function ClasesPage() {
 
   const bookedIds = new Set((myBookings ?? []).map(b => b.class_id))
   const hasPackage = !!myPackage
-  const waiverAccepted = user?.user_metadata?.waiver_accepted === true
   const grouped = groupByDate((classes ?? []) as YogaClass[])
 
   return (
@@ -105,7 +104,6 @@ export default async function ClasesPage() {
                             isBooked={bookedIds.has(cls.id)}
                             isFull={isFull}
                             isLoggedIn={!!user}
-                            waiverAccepted={waiverAccepted}
                             hasPackage={hasPackage}
                           />
                         </div>
