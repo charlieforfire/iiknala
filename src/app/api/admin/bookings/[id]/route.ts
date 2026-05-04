@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { isAdminAuthed } from '@/lib/admin-auth'
+import { resend, FROM } from '@/lib/resend'
+import { bookingConfirmedHtml, bookingConfirmedSubject } from '@/lib/emails/booking-confirmed'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,7 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { data: booking } = await adminDb
     .from('bookings')
-    .select('status, class_id')
+    .select('status, class_id, user_id')
     .eq('id', id)
     .single()
 
@@ -33,6 +35,33 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   await adminDb.from('bookings').update(update).eq('id', id)
+
+  if (status === 'confirmed') {
+    try {
+      const [{ data: cls }, { data: { user } }] = await Promise.all([
+        adminDb.from('yoga_classes').select('title, date, time, instructor').eq('id', booking.class_id).single(),
+        adminDb.auth.admin.getUserById(booking.user_id),
+      ])
+      if (cls && user?.email) {
+        await resend.emails.send({
+          from: FROM,
+          to: user.email,
+          subject: bookingConfirmedSubject(cls.title),
+          html: bookingConfirmedHtml({
+            userName: user.user_metadata?.full_name ?? user.email,
+            classTitle: cls.title,
+            classDate: cls.date,
+            classTime: cls.time,
+            instructor: cls.instructor,
+            paymentMethod: method ?? 'efectivo',
+            bookingId: id,
+          }),
+        })
+      }
+    } catch (err) {
+      console.error('Email error:', err)
+    }
+  }
 
   if (status === 'cancelled' && booking.status === 'pending_cash') {
     const { data: cls } = await adminDb

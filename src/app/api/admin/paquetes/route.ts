@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { isAdminAuthed } from '@/lib/admin-auth'
+import { resend, FROM } from '@/lib/resend'
+import { packageConfirmedHtml, packageConfirmedSubject } from '@/lib/emails/package-confirmed'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,7 +18,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
-  const { error } = await adminDb.from('user_packages').insert({
+  const { data: pkg, error } = await adminDb.from('user_packages').insert({
     user_id,
     package_id: package_name.toLowerCase().replace(/\s+/g, '-'),
     package_name,
@@ -25,8 +27,30 @@ export async function POST(req: NextRequest) {
     status: 'active',
     expires_at: expires_at || null,
     stripe_session_id: payment_method ?? null,
-  })
+  }).select('id').single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  try {
+    const { data: { user } } = await adminDb.auth.admin.getUserById(user_id)
+    if (user?.email && pkg) {
+      await resend.emails.send({
+        from: FROM,
+        to: user.email,
+        subject: packageConfirmedSubject(package_name),
+        html: packageConfirmedHtml({
+          userName: user.user_metadata?.full_name ?? user.email,
+          packageName: package_name,
+          classesTotal: classes_total ? Number(classes_total) : null,
+          expiresAt: expires_at || null,
+          paymentMethod: payment_method ?? 'efectivo',
+          packageId: pkg.id,
+        }),
+      })
+    }
+  } catch (err) {
+    console.error('Email error:', err)
+  }
+
   return NextResponse.json({ ok: true })
 }

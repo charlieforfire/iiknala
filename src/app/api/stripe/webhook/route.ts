@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
+import { resend, FROM } from '@/lib/resend'
+import { bookingConfirmedHtml, bookingConfirmedSubject } from '@/lib/emails/booking-confirmed'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,16 +34,16 @@ export async function POST(req: NextRequest) {
         .single()
 
       if (!existing) {
-        await supabase.from('bookings').insert({
+        const { data: newBooking } = await supabase.from('bookings').insert({
           user_id: userId,
           class_id: classId,
           status: 'confirmed',
           stripe_payment_intent: session.payment_intent as string,
-        })
+        }).select('id').single()
 
         const { data: cls } = await supabase
           .from('yoga_classes')
-          .select('enrolled')
+          .select('enrolled, title, date, time, instructor')
           .eq('id', classId)
           .single()
 
@@ -54,6 +56,28 @@ export async function POST(req: NextRequest) {
 
         if (session.customer_email) {
           await createZoomMeetingIfOnline(classId, session.customer_email)
+        }
+
+        // Send confirmation email
+        if (cls && session.customer_email && newBooking) {
+          try {
+            await resend.emails.send({
+              from: FROM,
+              to: session.customer_email,
+              subject: bookingConfirmedSubject(cls.title),
+              html: bookingConfirmedHtml({
+                userName: session.customer_details?.name ?? session.customer_email,
+                classTitle: cls.title,
+                classDate: cls.date,
+                classTime: cls.time,
+                instructor: cls.instructor,
+                paymentMethod: session.payment_intent as string,
+                bookingId: newBooking.id,
+              }),
+            })
+          } catch (err) {
+            console.error('Email error:', err)
+          }
         }
       }
     }
@@ -71,7 +95,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
-async function createZoomMeetingIfOnline(classId: string, email: string) {
+async function createZoomMeetingIfOnline(classId: string, _email: string) {
   const { data: cls } = await supabase
     .from('yoga_classes')
     .select('is_online, zoom_link, title, date, time')
