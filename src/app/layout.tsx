@@ -10,9 +10,10 @@ const dmSans = DM_Sans({ subsets: ['latin'], weight: ['300', '400', '500', '600'
 export const metadata: Metadata = {
   title: 'iiknala Yoga — Clases y Formación',
   description: 'Reserva tus clases de yoga online y presenciales en Mérida, Yucatán. Descubre nuestra formación de profesores YTT 200H.',
+  metadataBase: new URL('https://www.iiknalayoga.com'),
   icons: {
-    icon: '/icon.png',
-    apple: '/apple-icon.png',
+    icon: [{ url: '/icon.png', sizes: '512x512', type: 'image/png' }],
+    apple: [{ url: '/apple-icon.png', sizes: '512x512', type: 'image/png' }],
     shortcut: '/icon.png',
   },
   openGraph: {
@@ -22,13 +23,14 @@ export const metadata: Metadata = {
     siteName: 'iiknala Yoga',
     locale: 'es_MX',
     type: 'website',
+    images: [{ url: '/icon.png', width: 512, height: 512, alt: 'iiknala Yoga' }],
   },
   twitter: {
     card: 'summary',
     title: 'iiknala Yoga',
     description: 'Clases de yoga presenciales y online en Mérida, Yucatán.',
+    images: ['/icon.png'],
   },
-  metadataBase: new URL('https://www.iiknalayoga.com'),
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
