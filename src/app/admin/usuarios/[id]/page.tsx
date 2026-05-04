@@ -1,5 +1,4 @@
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isAdminAuthed } from '@/lib/admin-auth'
@@ -32,13 +31,12 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
   if (!await isAdminAuthed()) redirect('/admin/login')
 
   const { id } = await params
-  const supabase = await createClient()
 
   const [{ data: { user } }, bookingsRes, packagesRes, purchasesRes] = await Promise.all([
     adminDb.auth.admin.getUserById(id),
-    supabase.from('bookings').select('*, yoga_class:yoga_classes(title, date, time)').eq('user_id', id).order('created_at', { ascending: false }),
-    supabase.from('user_packages').select('*').eq('user_id', id).order('created_at', { ascending: false }),
-    supabase.from('purchases').select('*').eq('user_id', id).order('created_at', { ascending: false }),
+    adminDb.from('bookings').select('*, yoga_class:yoga_classes(title, date, time)').eq('user_id', id).order('created_at', { ascending: false }),
+    adminDb.from('user_packages').select('*').eq('user_id', id).order('created_at', { ascending: false }),
+    adminDb.from('purchases').select('*').eq('user_id', id).order('created_at', { ascending: false }),
   ])
 
   if (!user) redirect('/admin/usuarios')
@@ -176,8 +174,13 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                        {p.stripe_session_id ? 'Stripe' : 'Efectivo'}
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                        p.stripe_session_id?.startsWith('cs_') ? 'bg-purple-100 text-purple-700' :
+                        p.stripe_session_id?.includes('transferencia') ? 'bg-blue-100 text-blue-700' :
+                        'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {p.stripe_session_id?.startsWith('cs_') ? 'Stripe' :
+                         p.stripe_session_id?.includes('transferencia') ? 'Transferencia' : 'Efectivo'}
                       </span>
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${p.status === 'active' ? 'bg-[#eef2ec] text-[#4a6741]' : 'bg-stone-100 text-stone-500'}`}>
                         {p.status === 'active' ? 'Activo' : p.status === 'exhausted' ? 'Agotado' : 'Expirado'}
@@ -202,14 +205,14 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
               const d = b.yoga_class ? new Date(b.yoga_class.date + 'T12:00:00') : null
               const label = d ? `${diasSemana[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]}` : '—'
               return (
-                <div key={b.id} className="bg-white border border-stone-200 rounded-xl px-5 py-4 flex items-center justify-between">
+                <div key={b.id} className="bg-white border border-stone-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <p className="font-medium text-stone-800 text-sm">{b.yoga_class?.title ?? '—'}</p>
                     <p className="text-xs text-stone-400 mt-0.5">
                       {label}{b.yoga_class?.time && ` · ${b.yoga_class.time.slice(0,5)}`}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {b.status === 'confirmed' && (
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                         b.stripe_payment_intent?.startsWith('pi_') ? 'bg-purple-100 text-purple-700' :

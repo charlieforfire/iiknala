@@ -1,5 +1,4 @@
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isAdminAuthed } from '@/lib/admin-auth'
@@ -19,9 +18,8 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
   if (!await isAdminAuthed()) redirect('/admin/login')
 
   const { id } = await params
-  const supabase = await createClient()
 
-  const { data: cls } = await supabase
+  const { data: cls } = await adminDb
     .from('yoga_classes')
     .select('*')
     .eq('id', id)
@@ -29,7 +27,7 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
 
   if (!cls) redirect('/admin')
 
-  const { data: bookings } = await supabase
+  const { data: bookings } = await adminDb
     .from('bookings')
     .select('*')
     .eq('class_id', id)

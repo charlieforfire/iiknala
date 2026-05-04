@@ -14,9 +14,10 @@ export default function CancelButton({ bookingId, classDate, classTime }: Props)
   const [loading, setLoading] = useState(false)
 
   const classDateTime = new Date(`${classDate}T${classTime}`)
-  const isPast = classDateTime.getTime() < Date.now()
+  const cutoff = new Date(classDateTime.getTime() - 2 * 60 * 60 * 1000)
+  const isTooLate = cutoff.getTime() < Date.now()
 
-  if (isPast) return null
+  if (isTooLate) return null
 
   async function handleCancel() {
     if (!confirm('¿Cancelar esta reserva? Tu crédito será devuelto a tu paquete.')) return

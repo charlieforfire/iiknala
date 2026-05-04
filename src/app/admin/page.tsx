@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { isAdminAuthed } from '@/lib/admin-auth'
@@ -20,23 +19,21 @@ const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto'
 export default async function AdminPage() {
   if (!await isAdminAuthed()) redirect('/admin/login')
 
-  const supabase = await createClient()
-
-  const { data: classes } = await supabase
+  const { data: classes } = await adminDb
     .from('yoga_classes')
     .select('*, bookings(id, status, user_id)')
     .gte('date', new Date().toISOString().split('T')[0])
     .order('date', { ascending: true })
     .order('time', { ascending: true })
 
-  const { data: allBookings } = await supabase
+  const { data: allBookings } = await adminDb
     .from('bookings')
     .select('*, yoga_class:yoga_classes(title, date, time)')
     .eq('status', 'confirmed')
     .order('created_at', { ascending: false })
     .limit(50)
 
-  const { data: pendingCash } = await supabase
+  const { data: pendingCash } = await adminDb
     .from('bookings')
     .select('*, yoga_class:yoga_classes(title, date, time)')
     .eq('status', 'pending_cash')

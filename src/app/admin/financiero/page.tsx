@@ -1,5 +1,4 @@
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { isAdminAuthed } from '@/lib/admin-auth'
 import AdminNav from '@/components/admin/AdminNav'
@@ -30,13 +29,12 @@ function startOfMonth() {
 export default async function FinancieroPage() {
   if (!await isAdminAuthed()) redirect('/admin/login')
 
-  const supabase = await createClient()
   const mesInicio = startOfMonth()
 
   const [packagesRes, purchasesRes, cashBookingsRes] = await Promise.all([
-    supabase.from('user_packages').select('*').gte('created_at', mesInicio).order('created_at', { ascending: false }),
-    supabase.from('purchases').select('*').eq('status', 'completed').gte('created_at', mesInicio).order('created_at', { ascending: false }),
-    supabase.from('bookings').select('*, yoga_class:yoga_classes(title, date, time)')
+    adminDb.from('user_packages').select('*').gte('created_at', mesInicio).order('created_at', { ascending: false }),
+    adminDb.from('purchases').select('*').eq('status', 'completed').gte('created_at', mesInicio).order('created_at', { ascending: false }),
+    adminDb.from('bookings').select('*, yoga_class:yoga_classes(title, date, time)')
       .eq('status', 'confirmed')
       .is('stripe_payment_intent', null)
       .gte('created_at', mesInicio)

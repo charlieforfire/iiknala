@@ -29,6 +29,14 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     .eq('id', booking.class_id)
     .single()
 
+  if (cls) {
+    const classDateTime = new Date(`${cls.date}T${cls.time}`)
+    const cutoff = new Date(classDateTime.getTime() - 2 * 60 * 60 * 1000)
+    if (cutoff.getTime() < Date.now()) {
+      return NextResponse.json({ error: 'No se puede cancelar con menos de 2 horas de anticipación' }, { status: 400 })
+    }
+  }
+
   // Cancelar la reserva
   await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', id)
 

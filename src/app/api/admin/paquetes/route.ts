@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     classes_used: 0,
     status: 'active',
     expires_at: expires_at || null,
-    stripe_session_id: payment_method ?? null,
+    stripe_session_id: `manual_${payment_method ?? 'efectivo'}_${crypto.randomUUID()}`,
   }).select('id').single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { isAdminAuthed } from '@/lib/admin-auth'
@@ -9,22 +9,25 @@ import ZoomButton from '@/components/admin/ZoomButton'
 import CreateClassForm from '@/components/admin/CreateClassForm'
 import DeleteClassButton from '@/components/admin/DeleteClassButton'
 
+const adminDb = createAdmin(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
 
 export default async function ClasesAdminPage() {
   if (!await isAdminAuthed()) redirect('/admin/login')
 
-  const supabase = await createClient()
-
-  const { data: upcoming } = await supabase
+  const { data: upcoming } = await adminDb
     .from('yoga_classes')
     .select('*, bookings(id, status)')
     .gte('date', new Date().toISOString().split('T')[0])
     .order('date', { ascending: true })
     .order('time', { ascending: true })
 
-  const { data: past } = await supabase
+  const { data: past } = await adminDb
     .from('yoga_classes')
     .select('*, bookings(id, status)')
     .lt('date', new Date().toISOString().split('T')[0])
