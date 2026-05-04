@@ -46,6 +46,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="es" className="h-full antialiased">
+      <head>
+        <meta name="google-site-verification" content="88ytuynoy6KT0kRN01rVBnjR3e4Nq2UF9QD1DEbEsjw" />
+      </head>
       <body className={`${dmSans.className} min-h-full flex flex-col bg-stone-50 text-stone-900`}>
         <Navbar user={user} />
         <main className="flex-1 pt-16">
