@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { isAdminAuthed } from '@/lib/admin-auth'
-import { resend, FROM } from '@/lib/resend'
+import { getResend, FROM } from '@/lib/resend'
 import { bookingConfirmedHtml, bookingConfirmedSubject } from '@/lib/emails/booking-confirmed'
 
 const adminDb = createAdmin(
@@ -43,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         adminDb.auth.admin.getUserById(booking.user_id),
       ])
       if (cls && user?.email) {
-        await resend.emails.send({
+        await getResend().emails.send({
           from: FROM,
           to: user.email,
           subject: bookingConfirmedSubject(cls.title),

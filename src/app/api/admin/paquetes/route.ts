@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { isAdminAuthed } from '@/lib/admin-auth'
-import { resend, FROM } from '@/lib/resend'
+import { getResend, FROM } from '@/lib/resend'
 import { packageConfirmedHtml, packageConfirmedSubject } from '@/lib/emails/package-confirmed'
 
 const adminDb = createAdmin(
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   try {
     const { data: { user } } = await adminDb.auth.admin.getUserById(user_id)
     if (user?.email && pkg) {
-      await resend.emails.send({
+      await getResend().emails.send({
         from: FROM,
         to: user.email,
         subject: packageConfirmedSubject(package_name),

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
-import { resend, FROM } from '@/lib/resend'
+import { getResend, FROM } from '@/lib/resend'
 import { bookingConfirmedHtml, bookingConfirmedSubject } from '@/lib/emails/booking-confirmed'
 
 const supabase = createClient(
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         // Send confirmation email
         if (cls && session.customer_email && newBooking) {
           try {
-            await resend.emails.send({
+            await getResend().emails.send({
               from: FROM,
               to: session.customer_email,
               subject: bookingConfirmedSubject(cls.title),
