@@ -25,12 +25,15 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [birthday, setBirthday] = useState('')
+  const [gender, setGender] = useState('')
+  const [phone, setPhone] = useState('')
   const [waiverAccepted, setWaiverAccepted] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: { preventDefault: () => void }) {
     e.preventDefault()
     if (!waiverAccepted) return
     setLoading(true)
@@ -46,7 +49,15 @@ export default function RegisterPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, waiver_accepted: true } },
+      options: {
+        data: {
+          full_name: fullName,
+          birthday: birthday || null,
+          gender: gender || null,
+          phone: phone || null,
+          waiver_accepted: true,
+        },
+      },
     })
 
     if (error) {
@@ -85,6 +96,8 @@ export default function RegisterPage() {
 
         <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+            {/* Nombre */}
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1.5">Nombre completo</label>
               <input
@@ -93,9 +106,11 @@ export default function RegisterPage() {
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
-                placeholder="Tu nombre"
+                placeholder="Tu nombre completo"
               />
             </div>
+
+            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1.5">Email</label>
               <input
@@ -107,6 +122,8 @@ export default function RegisterPage() {
                 placeholder="tu@email.com"
               />
             </div>
+
+            {/* Contraseña */}
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1.5">Contraseña</label>
               <div className="relative">
@@ -126,6 +143,49 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+            </div>
+
+            {/* Fecha de nacimiento */}
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Fecha de nacimiento</label>
+              <input
+                type="date"
+                required
+                value={birthday}
+                onChange={e => setBirthday(e.target.value)}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 16)).toISOString().split('T')[0]}
+                className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
+              />
+            </div>
+
+            {/* Género */}
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Género</label>
+              <select
+                required
+                value={gender}
+                onChange={e => setGender(e.target.value)}
+                className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
+              >
+                <option value="">Selecciona...</option>
+                <option value="mujer">Mujer</option>
+                <option value="hombre">Hombre</option>
+                <option value="no-binario">No binario</option>
+                <option value="prefiero-no-decir">Prefiero no decir</option>
+              </select>
+            </div>
+
+            {/* Teléfono */}
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Número de teléfono</label>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
+                placeholder="Ej: 9999123456"
+              />
             </div>
 
             {/* Waiver */}

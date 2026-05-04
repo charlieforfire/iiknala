@@ -45,6 +45,8 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
   const name = user.user_metadata?.full_name ?? '—'
   const birthday = user.user_metadata?.birthday as string | undefined
   const notes = user.user_metadata?.notes as string | undefined
+  const gender = user.user_metadata?.gender as string | undefined
+  const phone = user.user_metadata?.phone as string | undefined
   const bookings = bookingsRes.data ?? []
   const packages = packagesRes.data ?? []
   const purchases = purchasesRes.data ?? []
@@ -92,9 +94,13 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
               Registrado el {new Date(user.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
             {birthday && (
-              <p className="text-stone-400 text-xs mt-1">
-                🎂 Cumpleaños: {fmtBirthday(birthday)}
-              </p>
+              <p className="text-stone-400 text-xs mt-1">🎂 Cumpleaños: {fmtBirthday(birthday)}</p>
+            )}
+            {phone && (
+              <p className="text-stone-400 text-xs mt-0.5">📱 {phone}</p>
+            )}
+            {gender && (
+              <p className="text-stone-400 text-xs mt-0.5 capitalize">{gender.replace('-', ' ')}</p>
             )}
           </div>
           {activePackage && (
