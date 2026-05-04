@@ -168,10 +168,9 @@ export default function RegisterPage() {
                 className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
               >
                 <option value="">Selecciona...</option>
-                <option value="mujer">Mujer</option>
-                <option value="hombre">Hombre</option>
-                <option value="no-binario">No binario</option>
-                <option value="prefiero-no-decir">Prefiero no decir</option>
+                <option value="femenino">Femenino</option>
+                <option value="masculino">Masculino</option>
+                <option value="otro">Otro</option>
               </select>
             </div>
 
