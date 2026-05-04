@@ -54,6 +54,28 @@ export default async function AdminPage() {
     })
   )
 
+  // Cumpleaños este mes
+  const { data: { users: allUsers } } = await adminDb.auth.admin.listUsers({ perPage: 200 })
+  const currentMonth = new Date().getMonth()
+  const currentDay = new Date().getDate()
+  const birthdaysThisMonth = allUsers
+    .filter(u => {
+      const bday = u.user_metadata?.birthday as string | undefined
+      if (!bday) return false
+      const d = new Date(bday + 'T12:00:00')
+      return d.getMonth() === currentMonth
+    })
+    .map(u => {
+      const bday = new Date((u.user_metadata.birthday as string) + 'T12:00:00')
+      return {
+        id: u.id,
+        name: u.user_metadata?.full_name ?? u.email ?? '—',
+        day: bday.getDate(),
+        isToday: bday.getDate() === currentDay,
+      }
+    })
+    .sort((a, b) => a.day - b.day)
+
   // Emails para las últimas reservas confirmadas
   const bookingsWithEmail = await Promise.all(
     (allBookings ?? []).map(async (b: any) => {
@@ -77,6 +99,30 @@ export default async function AdminPage() {
       </div>
 
       <AdminNav active="clases" />
+
+      {/* Cumpleaños este mes */}
+      {birthdaysThisMonth.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-lg font-medium text-stone-700 mb-4 flex items-center gap-2">
+            🎂 Cumpleaños este mes
+            <span className="text-stone-400 font-normal text-sm">({birthdaysThisMonth.length})</span>
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {birthdaysThisMonth.map(u => (
+              <div
+                key={u.id}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm ${u.isToday ? 'bg-amber-50 border-amber-200' : 'bg-white border-stone-200'}`}
+              >
+                <span className="text-lg">{u.isToday ? '🎉' : '🎂'}</span>
+                <div>
+                  <p className="font-medium text-stone-800">{u.name}</p>
+                  <p className="text-xs text-stone-400">{u.isToday ? 'Hoy' : `Día ${u.day}`}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Resumen de clases */}
       <section className="mb-16">

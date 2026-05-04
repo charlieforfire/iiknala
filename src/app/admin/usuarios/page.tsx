@@ -10,6 +10,15 @@ const adminDb = createAdmin(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+function birthdayDaysAway(birthday: string): number | null {
+  if (!birthday) return null
+  const today = new Date()
+  const bday = new Date(birthday + 'T12:00:00')
+  const next = new Date(today.getFullYear(), bday.getMonth(), bday.getDate())
+  if (next < today) next.setFullYear(today.getFullYear() + 1)
+  return Math.ceil((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
 export default async function UsuariosPage() {
   if (!await isAdminAuthed()) redirect('/admin/login')
 
@@ -17,7 +26,9 @@ export default async function UsuariosPage() {
 
   const [bookingCountsRes, activePackagesRes] = await Promise.all([
     adminDb.from('bookings').select('user_id, status'),
-    adminDb.from('user_packages').select('user_id').eq('status', 'active'),
+    adminDb.from('user_packages')
+      .select('user_id, package_name, classes_total, classes_used, status')
+      .eq('status', 'active'),
   ])
 
   const countMap: Record<string, { total: number; pending: number }> = {}
@@ -27,7 +38,14 @@ export default async function UsuariosPage() {
     if (b.status === 'pending_cash') countMap[b.user_id].pending++
   }
 
-  const activeUserIds = new Set((activePackagesRes.data ?? []).map((p: any) => p.user_id))
+  const packageMap: Record<string, { package_name: string; classes_total: number | null; classes_used: number }> = {}
+  for (const p of activePackagesRes.data ?? []) {
+    packageMap[p.user_id] = {
+      package_name: p.package_name,
+      classes_total: p.classes_total,
+      classes_used: p.classes_used,
+    }
+  }
 
   const sorted = [...users].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -53,21 +71,30 @@ export default async function UsuariosPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
-        <div className="grid grid-cols-4 bg-stone-50 border-b border-stone-200 px-6 py-3 text-xs font-medium text-stone-500 uppercase tracking-wide">
+        <div className="grid grid-cols-5 bg-stone-50 border-b border-stone-200 px-6 py-3 text-xs font-medium text-stone-500 uppercase tracking-wide">
           <span className="col-span-2">Usuario</span>
-          <span>Registro</span>
+          <span className="col-span-2">Paquete · clases</span>
           <span className="text-right">Reservas</span>
         </div>
         {sorted.map(u => {
           const name = u.user_metadata?.full_name ?? '—'
           const counts = countMap[u.id] ?? { total: 0, pending: 0 }
-          const fecha = new Date(u.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
-          const hasActive = activeUserIds.has(u.id)
+          const pkg = packageMap[u.id]
+          const hasActive = !!pkg
+          const birthday = u.user_metadata?.birthday as string | undefined
+          const daysAway = birthday ? birthdayDaysAway(birthday) : null
+          const birthdaySoon = daysAway !== null && daysAway <= 7
+          const hasNotes = !!(u.user_metadata?.notes as string | undefined)
+
+          const usedPct = pkg && pkg.classes_total
+            ? Math.min(Math.round((pkg.classes_used / pkg.classes_total) * 100), 100)
+            : null
+
           return (
             <Link
               key={u.id}
               href={`/admin/usuarios/${u.id}`}
-              className="grid grid-cols-4 px-6 py-4 border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors"
+              className="grid grid-cols-5 px-6 py-4 border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors items-center"
             >
               <div className="col-span-2 flex items-center gap-3">
                 <span
@@ -75,15 +102,42 @@ export default async function UsuariosPage() {
                   title={hasActive ? 'Paquete activo' : 'Sin paquete activo'}
                 />
                 <div>
-                  <p className="text-stone-800 font-medium text-sm">{name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-stone-800 font-medium text-sm">{name}</p>
+                    {birthdaySoon && <span title={`Cumpleaños en ${daysAway} día${daysAway === 1 ? '' : 's'}`}>🎂</span>}
+                    {hasNotes && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" title="Tiene notas" />}
+                  </div>
                   <p className="text-stone-400 text-xs">{u.email}</p>
                 </div>
               </div>
-              <p className="text-stone-500 text-sm self-center">{fecha}</p>
-              <div className="text-right self-center">
+
+              <div className="col-span-2 pr-4">
+                {pkg ? (
+                  <div>
+                    <p className="text-stone-700 text-xs font-medium mb-1 truncate">{pkg.package_name}</p>
+                    {pkg.classes_total === null ? (
+                      <p className="text-xs text-stone-400">Ilimitado</p>
+                    ) : (
+                      <>
+                        <div className="w-full bg-stone-100 rounded-full h-1.5 mb-0.5">
+                          <div
+                            className={`h-1.5 rounded-full transition-all ${(usedPct ?? 0) >= 90 ? 'bg-red-400' : (usedPct ?? 0) >= 60 ? 'bg-amber-400' : 'bg-[#4a6741]'}`}
+                            style={{ width: `${usedPct}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-stone-400">{pkg.classes_used} / {pkg.classes_total} clases</p>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-stone-300 text-xs">Sin paquete</p>
+                )}
+              </div>
+
+              <div className="text-right">
                 <p className="text-stone-800 text-sm font-medium">{counts.total}</p>
                 {counts.pending > 0 && (
-                  <p className="text-amber-600 text-xs">{counts.pending} pendiente{counts.pending > 1 ? 's' : ''}</p>
+                  <p className="text-amber-600 text-xs">{counts.pending} pend.</p>
                 )}
               </div>
             </Link>
