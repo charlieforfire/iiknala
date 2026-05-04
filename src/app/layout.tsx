@@ -8,8 +8,27 @@ import { createClient } from '@/lib/supabase/server'
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] })
 
 export const metadata: Metadata = {
-  title: 'Iiknala Yoga — Clases y Formación',
-  description: 'Reserva tus clases de yoga online y presenciales, y descubre nuestra formación de profesores.',
+  title: 'iiknala Yoga — Clases y Formación',
+  description: 'Reserva tus clases de yoga online y presenciales en Mérida, Yucatán. Descubre nuestra formación de profesores YTT 200H.',
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+    shortcut: '/icon.png',
+  },
+  openGraph: {
+    title: 'iiknala Yoga',
+    description: 'Clases de yoga presenciales y online en Mérida, Yucatán. Formación de profesores YTT 200H.',
+    url: 'https://www.iiknalayoga.com',
+    siteName: 'iiknala Yoga',
+    locale: 'es_MX',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'iiknala Yoga',
+    description: 'Clases de yoga presenciales y online en Mérida, Yucatán.',
+  },
+  metadataBase: new URL('https://www.iiknalayoga.com'),
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
