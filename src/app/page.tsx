@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, MapPin, Star } from 'lucide-react'
+import SeamlessVideo from '@/components/ui/SeamlessVideo'
 import { getInstagramPosts } from '@/lib/instagram'
 
 const classes = [
@@ -131,13 +132,9 @@ export default async function HomePage() {
           playsInline
         />
         {/* Video mobile */}
-        <video
-          className="absolute inset-0 w-full h-full object-cover block md:hidden"
+        <SeamlessVideo
           src="/hero-video-mobile.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
+          className="absolute inset-0 w-full h-full object-cover block md:hidden"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
         <div className="relative z-10 text-center max-w-3xl mx-auto px-6">
