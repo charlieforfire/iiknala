@@ -98,7 +98,7 @@ export default async function AdminPage() {
         <AdminLogout />
       </div>
 
-      <AdminNav active="clases" />
+      <AdminNav active="dashboard" />
 
       {/* Cumpleaños este mes */}
       {birthdaysThisMonth.length > 0 && (
