@@ -37,6 +37,7 @@ export const metadata: Metadata = {
     images: ['/icon.png'],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  verification: { google: '88ytuynoy6KT0kRN01rVBnjR3e4Nq2UF9QD1DEbEsjw' },
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
