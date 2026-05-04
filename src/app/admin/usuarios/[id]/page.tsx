@@ -7,6 +7,7 @@ import AdminNav from '@/components/admin/AdminNav'
 import AdminLogout from '@/components/admin/AdminLogout'
 import ConfirmCashButton from '@/components/admin/ConfirmCashButton'
 import EditUserForm from '@/components/admin/EditUserForm'
+import DeleteUserButton from '@/components/admin/DeleteUserButton'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -80,9 +81,12 @@ export default async function UsuarioDetailPage({ params }: { params: Promise<{ 
 
       <AdminNav active="usuarios" />
 
-      <Link href="/admin/usuarios" className="text-sm text-stone-400 hover:text-stone-700 mb-6 inline-flex items-center gap-1">
-        ← Todos los usuarios
-      </Link>
+      <div className="flex items-center justify-between mb-6 mt-2">
+        <Link href="/admin/usuarios" className="text-sm text-stone-400 hover:text-stone-700 inline-flex items-center gap-1">
+          ← Todos los usuarios
+        </Link>
+        <DeleteUserButton userId={id} userName={name} />
+      </div>
 
       {/* Perfil */}
       <div className="bg-white rounded-2xl border border-stone-200 p-6 mb-6 mt-4">

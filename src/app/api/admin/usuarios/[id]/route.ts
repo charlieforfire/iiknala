@@ -27,3 +27,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!await isAdminAuthed()) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  const { id } = await params
+
+  // Delete related data first
+  await Promise.all([
+    adminDb.from('bookings').delete().eq('user_id', id),
+    adminDb.from('user_packages').delete().eq('user_id', id),
+    adminDb.from('purchases').delete().eq('user_id', id),
+  ])
+
+  const { error } = await adminDb.auth.admin.deleteUser(id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}
