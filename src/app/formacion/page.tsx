@@ -354,10 +354,6 @@ export default async function FormacionPage() {
             <p className="text-stone-400 text-sm mb-6">MXN · Total</p>
             <div className="flex flex-col gap-3 mb-8">
               <div className="flex justify-between text-sm border-b border-stone-100 pb-3">
-                <span className="text-stone-600">Inscripción</span>
-                <span className="font-medium text-stone-800">$6,000 MXN</span>
-              </div>
-              <div className="flex justify-between text-sm border-b border-stone-100 pb-3">
                 <span className="text-stone-600">7 mensualidades de</span>
                 <span className="font-medium text-stone-800">$6,000 MXN</span>
               </div>
@@ -397,7 +393,6 @@ export default async function FormacionPage() {
             </ul>
           </div>
           <div className="flex flex-col items-center gap-3 min-w-[200px]">
-            <p className="text-xs text-stone-400 text-center">Inscripción · $6,000 MXN</p>
             <BuyButton
               formationId="formacion-200h"
               stripePriceId={process.env.STRIPE_FORMATION_PRICE_ID ?? 'price_formation'}

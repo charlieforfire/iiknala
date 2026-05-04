@@ -33,6 +33,7 @@ export default function AssignPackageForm({ users }: { users: User[] }) {
   const [customName, setCustomName] = useState('')
   const [classesTotal, setClassesTotal] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo')
   const [search, setSearch] = useState('')
 
   const selected = PREDEFINED.find(p => p.label === packageName)
@@ -56,13 +57,14 @@ export default function AssignPackageForm({ users }: { users: User[] }) {
         package_name: finalName,
         classes_total: finalClasses ? Number(finalClasses) : null,
         expires_at: expiresAt || null,
+        payment_method: paymentMethod,
       }),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error ?? 'Error'); setLoading(false); return }
     setLoading(false)
     setSuccess(true)
-    setUserId(''); setPackageName(''); setCustomName(''); setClassesTotal(''); setExpiresAt(''); setSearch('')
+    setUserId(''); setPackageName(''); setCustomName(''); setClassesTotal(''); setExpiresAt(''); setSearch(''); setPaymentMethod('efectivo')
     setTimeout(() => setSuccess(false), 2500)
     router.refresh()
   }
@@ -149,6 +151,18 @@ export default function AssignPackageForm({ users }: { users: User[] }) {
                 />
               </div>
             )}
+
+            <div>
+              <label className="text-xs text-stone-500 uppercase tracking-wide block mb-1">Método de pago</label>
+              <select
+                value={paymentMethod}
+                onChange={e => setPaymentMethod(e.target.value as 'efectivo' | 'transferencia')}
+                className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#4a6741]"
+              >
+                <option value="efectivo">Efectivo</option>
+                <option value="transferencia">Transferencia</option>
+              </select>
+            </div>
 
             <div>
               <label className="text-xs text-stone-500 uppercase tracking-wide block mb-1">Fecha de vencimiento (opcional)</label>

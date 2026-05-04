@@ -10,7 +10,7 @@ const adminDb = createAdmin(
 export async function POST(req: NextRequest) {
   if (!await isAdminAuthed()) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
-  const { user_id, package_name, classes_total, expires_at } = await req.json()
+  const { user_id, package_name, classes_total, expires_at, payment_method } = await req.json()
 
   if (!user_id || !package_name) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     classes_used: 0,
     status: 'active',
     expires_at: expires_at || null,
-    stripe_session_id: null,
+    stripe_session_id: payment_method ?? null,
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

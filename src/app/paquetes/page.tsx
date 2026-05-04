@@ -13,6 +13,12 @@ const paquetesRegular = [
   { id: 'ilimitado', nombre: 'Ilimitado', clases: null, vigencia: 30, precio: 2400, destacado: false, extras: ['+2 invitados'] },
 ]
 
+const paquetesIlimitado = [
+  { id: 'ilimitado-3m', nombre: 'Ilimitado 3 meses', vigencia: 90, precio: 7200 },
+  { id: 'ilimitado-6m', nombre: 'Ilimitado 6 meses', vigencia: 180, precio: 14400 },
+  { id: 'ilimitado-12m', nombre: 'Ilimitado 12 meses', vigencia: 365, precio: 28800 },
+]
+
 const paquetesRocket = [
   { id: 'rocket-suelta', nombre: 'Clase Suelta Rocket', clases: 1, vigencia: null, precio: 300, extras: [] },
   { id: 'rocket-pack', nombre: 'Paquete Rocket', clases: 4, vigencia: 30, precio: 1000, extras: [] },
@@ -58,7 +64,7 @@ export default async function PaquetesPage() {
           <span>Valor</span>
           <span></span>
         </div>
-        {paquetesRegular.slice(2).map((p, i) => (
+        {paquetesRegular.slice(2).map((p) => (
           <div
             key={p.id}
             className={`grid grid-cols-4 items-center px-6 py-4 border-b border-stone-100 last:border-0 ${p.destacado ? 'bg-[#eef2ec]' : ''}`}
@@ -74,6 +80,27 @@ export default async function PaquetesPage() {
                 </p>
               )}
             </div>
+            <p className="text-stone-500 text-sm">{p.vigencia} días</p>
+            <p className="text-lg font-light text-stone-800">{formatPrice(p.precio)}</p>
+            <div className="flex justify-end">
+              <PaqueteButton paqueteId={p.id} precio={p.precio} nombre={p.nombre} isLoggedIn={!!user} small />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Ilimitado multi-mes */}
+      <h2 className="text-xl font-light text-stone-700 mb-6 uppercase tracking-widest text-sm">Ilimitado multi-mes</h2>
+      <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden mb-12">
+        <div className="grid grid-cols-4 bg-stone-50 border-b border-stone-200 px-6 py-3 text-xs font-medium text-stone-500 uppercase tracking-wide">
+          <span>Plan</span>
+          <span>Vigencia</span>
+          <span>Valor</span>
+          <span></span>
+        </div>
+        {paquetesIlimitado.map(p => (
+          <div key={p.id} className="grid grid-cols-4 items-center px-6 py-4 border-b border-stone-100 last:border-0">
+            <p className="font-medium text-stone-800">{p.nombre}</p>
             <p className="text-stone-500 text-sm">{p.vigencia} días</p>
             <p className="text-lg font-light text-stone-800">{formatPrice(p.precio)}</p>
             <div className="flex justify-end">
