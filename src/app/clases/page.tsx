@@ -97,7 +97,7 @@ export default async function ClasesPage() {
                           </div>
                           <div>
                             <p className="font-semibold text-stone-800">{cls.title}</p>
-                            <p className="text-sm text-stone-400 mt-0.5">{cls.instructor} · {cls.duration_minutes} min</p>
+                            <p className="text-sm text-stone-400 mt-0.5">{cls.instructor} · 75 min</p>
                             <p className="text-xs mt-1 text-stone-400">
                               {isFull
                                 ? <span className="text-red-500 font-medium">Clase completa</span>

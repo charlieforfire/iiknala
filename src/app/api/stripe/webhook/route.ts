@@ -126,7 +126,7 @@ async function createZoomMeetingIfOnline(classId: string, _email: string) {
         topic: cls.title,
         type: 2,
         start_time: startTime.toISOString(),
-        duration: 60,
+        duration: 75,
         settings: { join_before_host: true, waiting_room: false },
       }),
     })

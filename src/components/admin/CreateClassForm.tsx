@@ -14,7 +14,7 @@ export default function CreateClassForm() {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [instructor, setInstructor] = useState('')
-  const [capacity, setCapacity] = useState('15')
+  const [capacity, setCapacity] = useState('20')
   const [level, setLevel] = useState('multinivel')
   const [description, setDescription] = useState('')
   const [isOnline, setIsOnline] = useState(false)
@@ -35,7 +35,7 @@ export default function CreateClassForm() {
     }
     setLoading(false)
     setOpen(false)
-    setTitle(''); setDate(''); setTime(''); setInstructor(''); setCapacity('15')
+    setTitle(''); setDate(''); setTime(''); setInstructor(''); setCapacity('20')
     setLevel('multinivel'); setDescription(''); setIsOnline(false)
     router.refresh()
   }
