@@ -3,6 +3,18 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import BookButton from '@/components/clases/BookButton'
 import type { YogaClass } from '@/types'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Clases de Yoga en Mérida',
+  description: 'Reserva tus clases de Vinyasa, Rocket y Dharma yoga en Mérida, Yucatán. Clases presenciales y online disponibles. Todos los niveles.',
+  alternates: { canonical: 'https://www.iiknalayoga.com/clases' },
+  openGraph: {
+    title: 'Clases de Yoga en Mérida, Yucatán | iiknala Yoga',
+    description: 'Vinyasa, Rocket y Dharma yoga. Presencial y online. Todos los niveles bienvenidos.',
+    url: 'https://www.iiknalayoga.com/clases',
+  },
+}
 
 export const revalidate = 60
 

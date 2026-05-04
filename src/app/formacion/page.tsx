@@ -2,6 +2,18 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { CheckCircle2, Star } from 'lucide-react'
 import BuyButton from '@/components/formacion/BuyButton'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Formación de Profesores de Yoga YTT 200H',
+  description: 'Formación de profesores de yoga YTT 200H Vinyasa Progresivo en Mérida, Yucatán. Certificación Yoga Alliance. Aprende a enseñar yoga con los mejores instructores de México.',
+  alternates: { canonical: 'https://www.iiknalayoga.com/formacion' },
+  openGraph: {
+    title: 'Formación Profesores Yoga YTT 200H | iiknala Mérida',
+    description: 'Certificación Yoga Alliance. YTT 200H Vinyasa Progresivo en Mérida, Yucatán. Conviértete en instructor de yoga.',
+    url: 'https://www.iiknalayoga.com/formacion',
+  },
+}
 
 const modulos = [
   {

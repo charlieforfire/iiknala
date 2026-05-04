@@ -117,7 +117,44 @@ export default async function HomePage() {
     ? instagramPosts.map(p => ({ src: p.media_url, alt: 'iiknala', href: p.permalink, isExternal: true }))
     : localGallery.map(p => ({ ...p, href: 'https://www.instagram.com/iiknala/', isExternal: false }))
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SportsActivityLocation',
+    name: 'iiknala Yoga',
+    alternateName: 'iiknala',
+    description: 'La mejor escuela de yoga en Mérida, Yucatán. Clases presenciales y online de Vinyasa, Rocket y Dharma. Formación de profesores YTT 200H certificada por Yoga Alliance.',
+    url: 'https://www.iiknalayoga.com',
+    logo: 'https://www.iiknalayoga.com/icon.png',
+    image: 'https://www.iiknalayoga.com/icon.png',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Mérida',
+      addressRegion: 'Yucatán',
+      addressCountry: 'MX',
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 21.0230019,
+      longitude: -89.601443,
+    },
+    sameAs: [
+      'https://www.instagram.com/iiknala/',
+      'https://www.facebook.com/iiknala/',
+    ],
+    hasMap: 'https://maps.app.goo.gl/HvFvUke1rqKYMRQs6',
+    priceRange: '$$',
+    currenciesAccepted: 'MXN',
+    paymentAccepted: 'Cash, Credit Card, Bank Transfer',
+    areaServed: 'Mérida, Yucatán, México',
+    knowsAbout: ['Vinyasa Yoga', 'Rocket Yoga', 'Dharma Yoga', 'Yoga Teacher Training', 'YTT 200H'],
+  }
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="flex flex-col">
 
       {/* Hero */}
@@ -385,5 +422,6 @@ export default async function HomePage() {
       </section>
 
     </div>
+    </>
   )
 }

@@ -2,6 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
 import { Check } from 'lucide-react'
 import PaqueteButton from '@/components/paquetes/PaqueteButton'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Precios y Paquetes de Yoga',
+  description: 'Paquetes de clases de yoga desde $200 MXN en Mérida, Yucatán. Clases sueltas, packs mensuales e ilimitados. Incluye clases presenciales y online.',
+  alternates: { canonical: 'https://www.iiknalayoga.com/paquetes' },
+  openGraph: {
+    title: 'Precios y Paquetes de Yoga | iiknala Mérida',
+    description: 'Desde clase suelta hasta ilimitado. Presencial y online. Precios en MXN.',
+    url: 'https://www.iiknalayoga.com/paquetes',
+  },
+}
 
 const paquetesRegular = [
   { id: 'primera-clase', nombre: 'Primera Clase', clases: 1, vigencia: null, precio: 200, destacado: false, extras: [] },
