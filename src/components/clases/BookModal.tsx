@@ -19,6 +19,7 @@ interface Props {
   onClose: () => void
   initialStep: Step
   initialHasPackage: boolean
+  initialHasGuestCredit: boolean
 }
 
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -31,13 +32,14 @@ function fmtClass(date: string, time: string) {
 
 export default function BookModal({
   classId, classTitle, classDate, classTime, instructor,
-  isOpen, onClose, initialStep, initialHasPackage,
+  isOpen, onClose, initialStep, initialHasPackage, initialHasGuestCredit,
 }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
   const [step, setStep] = useState<Step>(initialStep)
   const [hasPackage, setHasPackage] = useState(initialHasPackage)
+  const [hasGuestCredit, setHasGuestCredit] = useState(initialHasGuestCredit)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,14 +62,15 @@ export default function BookModal({
       setAuthLoading(false)
       return
     }
-    const { data: pkg } = await supabase
-      .from('user_packages')
-      .select('id')
-      .eq('user_id', data.user.id)
-      .eq('status', 'active')
-      .limit(1)
-      .single()
-    setHasPackage(!!pkg)
+    const today = new Date().toISOString().split('T')[0]
+    const [{ data: pkg }, { data: credit }] = await Promise.all([
+      supabase.from('user_packages').select('id, classes_total, classes_used').eq('user_id', data.user.id)
+        .eq('status', 'active').or(`expires_at.is.null,expires_at.gte.${today}`).limit(1).single(),
+      supabase.from('guest_class_credits').select('id').eq('user_id', data.user.id)
+        .eq('status', 'available').or(`expires_at.is.null,expires_at.gte.${today}`).limit(1).single(),
+    ])
+    setHasPackage(!!pkg && (pkg.classes_total === null || pkg.classes_used < pkg.classes_total))
+    setHasGuestCredit(!!credit)
     setAuthLoading(false)
     setStep('book')
   }
@@ -171,6 +174,14 @@ export default function BookModal({
                 className="w-full py-3 rounded-xl bg-[#4a6741] hover:bg-[#3a5232] disabled:opacity-60 text-white font-medium text-sm transition-colors"
               >
                 {bookLoading === 'package' ? 'Reservando...' : 'Reservar con paquete'}
+              </button>
+            ) : hasGuestCredit ? (
+              <button
+                onClick={() => handleBook('package')}
+                disabled={bookLoading !== null}
+                className="w-full py-3 rounded-xl bg-[#4a6741] hover:bg-[#3a5232] disabled:opacity-60 text-white font-medium text-sm transition-colors"
+              >
+                {bookLoading === 'package' ? 'Reservando...' : 'Reservar con clase de invitado 🎁'}
               </button>
             ) : (
               <Link

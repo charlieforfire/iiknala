@@ -3,6 +3,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { isAdminAuthed } from '@/lib/admin-auth'
 import { getResend, FROM } from '@/lib/resend'
 import { packageConfirmedHtml, packageConfirmedSubject } from '@/lib/emails/package-confirmed'
+import { inviteCodesForPackage, createInviteCodes } from '@/lib/invite-codes'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,6 +31,9 @@ export async function POST(req: NextRequest) {
   }).select('id').single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const codesCount = inviteCodesForPackage(package_name.toLowerCase().replace(/\s+/g, '-'))
+  await createInviteCodes(adminDb, pkg.id, user_id, codesCount, expires_at || null)
 
   try {
     const { data: { user } } = await adminDb.auth.admin.getUserById(user_id)

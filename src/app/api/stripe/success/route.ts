@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
+import { inviteCodesForPackage, createInviteCodes } from '@/lib/invite-codes'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
           ? new Date(Date.now() + config.days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
           : null
 
-        await supabase.from('user_packages').insert({
+        const { data: newPkg } = await supabase.from('user_packages').insert({
           user_id: userId,
           package_id: paqueteId,
           package_name: nombre ?? paqueteId,
@@ -64,7 +65,12 @@ export async function GET(req: NextRequest) {
           expires_at: expiresAt,
           status: 'active',
           stripe_session_id: session.id,
-        })
+        }).select('id').single()
+
+        if (newPkg) {
+          const codesCount = inviteCodesForPackage(paqueteId)
+          await createInviteCodes(supabase, newPkg.id, userId, codesCount, expiresAt)
+        }
       }
     }
 

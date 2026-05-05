@@ -43,7 +43,7 @@ export default async function ClasesPage() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: myBookings }, { data: myPackage }] = await Promise.all([
+  const [{ data: myBookings }, { data: myPackage }, { data: myGuestCredit }] = await Promise.all([
     user
       ? supabase.from('bookings').select('class_id').eq('user_id', user.id).eq('status', 'confirmed')
       : Promise.resolve({ data: [] }),
@@ -51,10 +51,15 @@ export default async function ClasesPage() {
       ? supabase.from('user_packages').select('*').eq('user_id', user.id).eq('status', 'active')
           .or(`expires_at.is.null,expires_at.gte.${today}`).limit(1).single()
       : Promise.resolve({ data: null }),
+    user
+      ? supabase.from('guest_class_credits').select('id').eq('user_id', user.id).eq('status', 'available')
+          .or(`expires_at.is.null,expires_at.gte.${today}`).limit(1).single()
+      : Promise.resolve({ data: null }),
   ])
 
   const bookedIds = new Set((myBookings ?? []).map(b => b.class_id))
-  const hasPackage = !!myPackage
+  const hasPackage = !!myPackage && (myPackage.classes_total === null || myPackage.classes_used < myPackage.classes_total)
+  const hasGuestCredit = !!myGuestCredit
   const grouped = groupByDate((classes ?? []) as YogaClass[])
 
   return (
@@ -117,6 +122,7 @@ export default async function ClasesPage() {
                             isFull={isFull}
                             isLoggedIn={!!user}
                             hasPackage={hasPackage}
+                            hasGuestCredit={hasGuestCredit}
                           />
                         </div>
                       </div>

@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { formatDate, formatTime } from '@/lib/utils'
-import { Video, MapPin, Calendar, BookOpen, ExternalLink, Package } from 'lucide-react'
+import { Video, MapPin, Calendar, BookOpen, ExternalLink, Package, Gift } from 'lucide-react'
 import CancelButton from '@/components/dashboard/CancelButton'
+import CopyCodeButton from '@/components/dashboard/CopyCodeButton'
 import Link from 'next/link'
 
 export default async function DashboardPage() {
@@ -13,11 +14,13 @@ export default async function DashboardPage() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: bookings }, { data: purchases }, { data: activePackage }] = await Promise.all([
+  const [{ data: bookings }, { data: purchases }, { data: activePackage }, { data: inviteCodes }, { data: guestCredits }] = await Promise.all([
     supabase.from('bookings').select('*, yoga_class:yoga_classes(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('purchases').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('user_packages').select('*').eq('user_id', user.id).eq('status', 'active')
       .or(`expires_at.is.null,expires_at.gte.${today}`).order('created_at', { ascending: true }).limit(1).single(),
+    supabase.from('invite_codes').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('guest_class_credits').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
   ])
 
   const name = user.user_metadata?.full_name ?? user.email
@@ -123,6 +126,47 @@ export default async function DashboardPage() {
           </div>
         )}
       </section>
+
+      {/* Códigos de invitado — mis códigos para compartir */}
+      {inviteCodes && inviteCodes.length > 0 && (
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-6">
+            <Gift className="w-5 h-5 text-[#4a6741]" />
+            <h2 className="text-xl font-medium text-stone-800">Mis códigos de invitado</h2>
+          </div>
+          <div className="flex flex-col gap-3">
+            {(inviteCodes as any[]).map((c) => (
+              <div key={c.id} className={`bg-white rounded-2xl border p-5 flex items-center justify-between gap-4 ${c.status === 'redeemed' ? 'border-stone-100 opacity-60' : 'border-stone-200'}`}>
+                <div>
+                  <p className="font-mono font-semibold text-stone-800 tracking-widest text-lg">{c.code}</p>
+                  <p className="text-xs text-stone-400 mt-1">
+                    {c.status === 'redeemed' ? 'Canjeado' : c.expires_at ? `Vence ${formatDate(c.expires_at)}` : 'Sin vencimiento'}
+                  </p>
+                </div>
+                {c.status === 'available'
+                  ? <CopyCodeButton code={c.code} />
+                  : <span className="text-xs bg-stone-100 text-stone-400 px-3 py-1.5 rounded-full">Usado</span>
+                }
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-stone-400 mt-3">Comparte estos códigos con amigos — podrán reservar una clase gratis.</p>
+        </section>
+      )}
+
+      {/* Crédito de clase recibido como invitado */}
+      {guestCredits && guestCredits.some((c: any) => c.status === 'available') && (
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-4">
+            <Gift className="w-5 h-5 text-emerald-600" />
+            <h2 className="text-xl font-medium text-stone-800">Clase de invitado</h2>
+          </div>
+          <div className="bg-[#eef2ec] border border-[#4a6741]/20 rounded-2xl p-6">
+            <p className="font-medium text-stone-800">Tienes {(guestCredits as any[]).filter((c: any) => c.status === 'available').length} clase{(guestCredits as any[]).filter((c: any) => c.status === 'available').length > 1 ? 's' : ''} de invitado disponible{(guestCredits as any[]).filter((c: any) => c.status === 'available').length > 1 ? 's' : ''} 🎁</p>
+            <p className="text-sm text-stone-500 mt-1">Ve a <Link href="/clases" className="text-[#4a6741] underline">Clases</Link> y reserva tu lugar.</p>
+          </div>
+        </section>
+      )}
 
       {/* Mis compras (formaciones) */}
       <section>

@@ -13,11 +13,12 @@ interface Props {
   isFull: boolean
   isLoggedIn: boolean
   hasPackage: boolean
+  hasGuestCredit: boolean
 }
 
 export default function BookButton({
   classId, classTitle, classDate, classTime, instructor,
-  isBooked, isFull, isLoggedIn, hasPackage,
+  isBooked, isFull, isLoggedIn, hasPackage, hasGuestCredit,
 }: Props) {
   const [open, setOpen] = useState(false)
 
@@ -57,6 +58,7 @@ export default function BookButton({
         onClose={() => setOpen(false)}
         initialStep={initialStep}
         initialHasPackage={hasPackage}
+        initialHasGuestCredit={hasGuestCredit}
       />
     </>
   )
