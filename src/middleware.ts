@@ -7,13 +7,13 @@ export function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl
 
-  // Dejar pasar admin, api y la propia página de mantenimiento
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/mantenimiento') ||
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon')
+    pathname.startsWith('/favicon') ||
+    pathname.includes('.')
   ) {
     return NextResponse.next()
   }
@@ -22,5 +22,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:jpg|jpeg|png|gif|svg|webp|mp4|ico|woff2?)).*)'],
+  matcher: ['/:path*'],
 }
