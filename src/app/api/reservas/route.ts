@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
   const hasPackageCredit = activePkg && (activePkg.classes_total === null || activePkg.classes_used < activePkg.classes_total)
 
   if (!hasPackageCredit) {
-    const today = new Date().toISOString().split('T')[0]
     const { data: guestCredit } = await supabase
       .from('guest_class_credits')
       .select('*')
@@ -55,10 +54,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Usar crédito de invitado
-    const { data: newBooking, error } = await supabase.from('bookings').insert({
+    const { data: newBooking, error: guestBookingError } = await supabase.from('bookings').insert({
       user_id: user.id, class_id: classId, status: 'confirmed',
     }).select('id').single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (guestBookingError) return NextResponse.json({ error: guestBookingError.message }, { status: 500 })
 
     await admin.from('guest_class_credits').update({
       status: 'used',
