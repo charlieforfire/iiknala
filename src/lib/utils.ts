@@ -26,3 +26,10 @@ export function formatDate(dateString: string) {
 export function formatTime(timeString: string) {
   return timeString.slice(0, 5)
 }
+
+export function isSummerPromo(): boolean {
+  const now = new Date()
+  const start = new Date('2026-06-01T00:00:00')
+  const end = new Date('2026-08-31T23:59:59')
+  return now >= start && now <= end
+}

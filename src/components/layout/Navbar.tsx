@@ -14,7 +14,7 @@ const links = [
   { href: '/formacion', label: 'Formación' },
 ]
 
-export default function Navbar({ user }: { user: { email?: string } | null }) {
+export default function Navbar({ user, showBanner }: { user: { email?: string } | null; showBanner?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -27,7 +27,7 @@ export default function Navbar({ user }: { user: { email?: string } | null }) {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-stone-50/90 backdrop-blur border-b border-stone-200">
+    <nav className={`fixed left-0 right-0 z-50 bg-stone-50/90 backdrop-blur border-b border-stone-200 ${showBanner ? 'top-10' : 'top-0'}`}>
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-16">
         <Link href="/" className="flex items-center">
           <Image src="/logo.png" alt="iiknala" width={160} height={48} className="h-10 w-auto object-contain" priority />

@@ -3,7 +3,9 @@ import { DM_Sans } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import SummerPromoBanner from '@/components/layout/SummerPromoBanner'
 import { createClient } from '@/lib/supabase/server'
+import { isSummerPromo } from '@/lib/utils'
 
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] })
 
@@ -44,14 +46,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  const showBanner = isSummerPromo()
+
   return (
     <html lang="es" className="h-full antialiased">
       <head>
         <meta name="google-site-verification" content="88ytuynoy6KT0kRN01rVBnjR3e4Nq2UF9QD1DEbEsjw" />
       </head>
       <body className={`${dmSans.className} min-h-full flex flex-col bg-stone-50 text-stone-900`}>
-        <Navbar user={user} />
-        <main className="flex-1 pt-16">
+        {showBanner && <SummerPromoBanner />}
+        <Navbar user={user} showBanner={showBanner} />
+        <main className={`flex-1 ${showBanner ? 'pt-[104px]' : 'pt-16'}`}>
           {children}
         </main>
         <Footer />

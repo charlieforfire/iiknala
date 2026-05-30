@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, isSummerPromo } from '@/lib/utils'
 import { Check } from 'lucide-react'
 import PaqueteButton from '@/components/paquetes/PaqueteButton'
 import type { Metadata } from 'next'
@@ -36,9 +36,41 @@ const paquetesRocket = [
   { id: 'rocket-pack', nombre: 'Paquete Rocket', clases: 4, vigencia: 30, precio: 1000, extras: [] },
 ]
 
+const paquetesSummer = [
+  {
+    id: 'summer-ilimitado-verano',
+    nombre: 'Ilimitado Verano',
+    precio: 5500,
+    duracion: '1 jun – 31 ago',
+    nota: 'Clases ilimitadas · Cierra el 31 ago',
+  },
+  {
+    id: 'summer-ilimitado-jul-ago',
+    nombre: 'Ilimitado Jul + Ago',
+    precio: 3800,
+    duracion: '1 jul – 31 ago',
+    nota: 'Clases ilimitadas · Cierra el 31 ago',
+  },
+  {
+    id: 'summer-30-clases',
+    nombre: '30 clases / 2 meses',
+    precio: 3500,
+    duracion: '2 meses desde la compra',
+    nota: 'Máx 30 clases · Compartible',
+  },
+  {
+    id: 'summer-15-clases',
+    nombre: '15 clases al precio de 12',
+    precio: 1800,
+    duracion: '30 días desde la compra',
+    nota: 'Máx 15 clases · Máx 3 días/sem · Compartible',
+  },
+]
+
 export default async function PaquetesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const showSummer = isSummerPromo()
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-16">
@@ -50,6 +82,36 @@ export default async function PaquetesPage() {
           Todos los paquetes incluyen clases presenciales y vía Zoom.
         </p>
       </div>
+
+      {/* Summer Promo */}
+      {showSummer && (
+        <section id="summer-promo" className="mb-16 scroll-mt-28">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-2xl">🌞</span>
+            <div>
+              <h2 className="text-xl font-semibold text-stone-800">Summer Promo</h2>
+              <p className="text-xs text-stone-400">Válido del 1 jun al 31 ago 2026</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {paquetesSummer.map(p => (
+              <div key={p.id} className="bg-[#eef2ec] border border-[#c5d4c0] rounded-2xl p-6 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-stone-800">{p.nombre}</p>
+                  <p className="text-xl font-light text-stone-800 whitespace-nowrap">{formatPrice(p.precio)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#4a6741] font-medium">{p.duracion}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">{p.nota}</p>
+                </div>
+                <div className="mt-auto pt-1">
+                  <PaqueteButton paqueteId={p.id} precio={p.precio} nombre={p.nombre} isLoggedIn={!!user} small />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Clases sueltas destacadas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
