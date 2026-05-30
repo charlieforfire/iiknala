@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
-import { X, Eye, EyeOff } from 'lucide-react'
+import { X, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
-type Step = 'login' | 'book'
+type Step = 'login' | 'book' | 'done'
 
 interface Props {
   classId: string
@@ -20,6 +20,8 @@ interface Props {
   initialStep: Step
   initialHasPackage: boolean
   initialHasGuestCredit: boolean
+  spotsLeft: number
+  classesRemaining: number | null
 }
 
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -33,6 +35,7 @@ function fmtClass(date: string, time: string) {
 export default function BookModal({
   classId, classTitle, classDate, classTime, instructor,
   isOpen, onClose, initialStep, initialHasPackage, initialHasGuestCredit,
+  spotsLeft, classesRemaining,
 }: Props) {
   const router = useRouter()
   const supabase = createClient()
@@ -40,6 +43,11 @@ export default function BookModal({
   const [step, setStep] = useState<Step>(initialStep)
   const [hasPackage, setHasPackage] = useState(initialHasPackage)
   const [hasGuestCredit, setHasGuestCredit] = useState(initialHasGuestCredit)
+  const [currentSpotsLeft, setCurrentSpotsLeft] = useState(spotsLeft)
+  const [currentClassesRemaining, setCurrentClassesRemaining] = useState(classesRemaining)
+
+  const [withGuest, setWithGuest] = useState(false)
+  const [doneWithGuest, setDoneWithGuest] = useState(false)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -51,6 +59,17 @@ export default function BookModal({
   const [bookError, setBookError] = useState('')
 
   if (!isOpen) return null
+
+  const canBringGuest = hasPackage
+    && currentSpotsLeft >= 2
+    && (currentClassesRemaining === null || currentClassesRemaining >= 2)
+
+  const guestBlocked = withGuest && !canBringGuest
+  const guestBlockReason = withGuest && !canBringGuest
+    ? (currentSpotsLeft < 2
+        ? 'Esta clase no tiene lugares suficientes.'
+        : 'No tienes suficientes clases disponibles para traer a alguien.')
+    : null
 
   async function handleLogin(e: { preventDefault: () => void }) {
     e.preventDefault()
@@ -69,26 +88,31 @@ export default function BookModal({
       supabase.from('guest_class_credits').select('id').eq('user_id', data.user.id)
         .eq('status', 'available').or(`expires_at.is.null,expires_at.gte.${today}`).limit(1).single(),
     ])
+    const remaining = pkg ? (pkg.classes_total === null ? null : pkg.classes_total - pkg.classes_used) : null
     setHasPackage(!!pkg && (pkg.classes_total === null || pkg.classes_used < pkg.classes_total))
+    setCurrentClassesRemaining(remaining)
     setHasGuestCredit(!!credit)
     setAuthLoading(false)
     setStep('book')
   }
 
   async function handleBook(type: 'package' | 'cash') {
+    if (guestBlocked) return
     setBookLoading(type)
     setBookError('')
     try {
       const endpoint = type === 'cash' ? '/api/reservas/cash' : '/api/reservas'
+      const body = type === 'package' ? { classId, guest: withGuest } : { classId }
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classId }),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+      setDoneWithGuest(withGuest && type === 'package')
+      setStep('done')
       router.refresh()
-      onClose()
     } catch (e: any) {
       setBookError(e.message ?? 'Error al reservar')
     } finally {
@@ -100,7 +124,7 @@ export default function BookModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={step === 'done' ? onClose : undefined} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
 
         {/* Header */}
@@ -123,10 +147,7 @@ export default function BookModal({
             <div className="flex flex-col gap-1">
               <label className="text-xs text-stone-500 uppercase tracking-wide">Correo electrónico</label>
               <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="email" required value={email} onChange={e => setEmail(e.target.value)}
                 className="border border-stone-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#4a6741] transition-colors"
                 placeholder="tu@correo.com"
               />
@@ -135,9 +156,7 @@ export default function BookModal({
               <label className="text-xs text-stone-500 uppercase tracking-wide">Contraseña</label>
               <div className="relative">
                 <input
-                  type={showPwd ? 'text' : 'password'}
-                  required
-                  value={password}
+                  type={showPwd ? 'text' : 'password'} required value={password}
                   onChange={e => setPassword(e.target.value)}
                   className="w-full border border-stone-200 rounded-lg px-4 py-3 pr-10 text-sm focus:outline-none focus:border-[#4a6741] transition-colors"
                   placeholder="••••••••"
@@ -148,18 +167,13 @@ export default function BookModal({
               </div>
             </div>
             {authError && <p className="text-red-500 text-xs">{authError}</p>}
-            <button
-              type="submit"
-              disabled={authLoading}
-              className="w-full py-3 rounded-xl bg-stone-900 hover:bg-stone-800 disabled:opacity-60 text-white font-medium text-sm transition-colors"
-            >
+            <button type="submit" disabled={authLoading}
+              className="w-full py-3 rounded-xl bg-stone-900 hover:bg-stone-800 disabled:opacity-60 text-white font-medium text-sm transition-colors">
               {authLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </button>
             <p className="text-center text-sm text-stone-400">
               ¿No tienes cuenta?{' '}
-              <Link href="/auth/register" className="text-[#4a6741] font-medium hover:underline">
-                Crear cuenta
-              </Link>
+              <Link href="/auth/register" className="text-[#4a6741] font-medium hover:underline">Crear cuenta</Link>
             </p>
           </form>
         )}
@@ -167,13 +181,35 @@ export default function BookModal({
         {/* Step: Book */}
         {step === 'book' && (
           <div className="px-6 py-6 flex flex-col gap-3">
+            {/* Guest toggle — only for package booking */}
+            {hasPackage && (
+              <label className="flex items-center gap-3 bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={withGuest}
+                  onChange={e => { setWithGuest(e.target.checked); setBookError('') }}
+                  className="w-4 h-4 accent-[#4a6741] cursor-pointer flex-shrink-0"
+                />
+                <span className="text-sm text-stone-700 font-medium">Viene alguien conmigo</span>
+                <span className="ml-auto text-xs text-stone-400">−2 clases</span>
+              </label>
+            )}
+
+            {guestBlockReason && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                {guestBlockReason}
+              </p>
+            )}
+
             {hasPackage ? (
               <button
                 onClick={() => handleBook('package')}
-                disabled={bookLoading !== null}
-                className="w-full py-3 rounded-xl bg-[#4a6741] hover:bg-[#3a5232] disabled:opacity-60 text-white font-medium text-sm transition-colors"
+                disabled={bookLoading !== null || guestBlocked}
+                className="w-full py-3 rounded-xl bg-[#4a6741] hover:bg-[#3a5232] disabled:opacity-50 text-white font-medium text-sm transition-colors"
               >
-                {bookLoading === 'package' ? 'Reservando...' : 'Reservar con paquete'}
+                {bookLoading === 'package'
+                  ? 'Reservando...'
+                  : withGuest ? 'Reservar 2 lugares con paquete' : 'Reservar con paquete'}
               </button>
             ) : hasGuestCredit ? (
               <button
@@ -184,14 +220,12 @@ export default function BookModal({
                 {bookLoading === 'package' ? 'Reservando...' : 'Reservar con clase de invitado 🎁'}
               </button>
             ) : (
-              <Link
-                href="/paquetes"
-                onClick={onClose}
-                className="w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-medium text-sm transition-colors text-center block"
-              >
+              <Link href="/paquetes" onClick={onClose}
+                className="w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-medium text-sm transition-colors text-center block">
                 Comprar paquete para reservar
               </Link>
             )}
+
             <button
               onClick={() => handleBook('cash')}
               disabled={bookLoading !== null}
@@ -199,7 +233,29 @@ export default function BookModal({
             >
               {bookLoading === 'cash' ? 'Reservando...' : 'Reservar y pagar en estudio'}
             </button>
+
             {bookError && <p className="text-red-500 text-xs text-center">{bookError}</p>}
+          </div>
+        )}
+
+        {/* Step: Done */}
+        {step === 'done' && (
+          <div className="px-6 py-8 flex flex-col items-center gap-4 text-center">
+            <CheckCircle className="w-12 h-12 text-[#4a6741]" />
+            <div>
+              <p className="font-semibold text-stone-800 text-lg">
+                {doneWithGuest ? '¡Reservaste 2 lugares!' : '¡Lugar reservado!'}
+              </p>
+              {doneWithGuest && (
+                <p className="text-sm text-stone-500 mt-1">Se descontaron 2 clases de tu paquete.</p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="mt-2 w-full py-3 rounded-xl bg-[#4a6741] hover:bg-[#3a5232] text-white font-medium text-sm transition-colors"
+            >
+              Listo
+            </button>
           </div>
         )}
 

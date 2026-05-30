@@ -1,17 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createAdmin } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { formatDate, formatTime } from '@/lib/utils'
-import { Video, MapPin, Calendar, BookOpen, ExternalLink, Package, Gift, Share2, Tag } from 'lucide-react'
+import { Video, MapPin, Calendar, BookOpen, ExternalLink, Package, Gift, Users } from 'lucide-react'
 import CancelButton from '@/components/dashboard/CancelButton'
 import CopyCodeButton from '@/components/dashboard/CopyCodeButton'
-import ApplyCodeForm from '@/components/dashboard/ApplyCodeForm'
 import Link from 'next/link'
-
-const admin = createAdmin(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -21,44 +14,14 @@ export default async function DashboardPage() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [
-    { data: bookings },
-    { data: purchases },
-    { data: activePackage },
-    { data: inviteCodes },
-    { data: guestCredits },
-    { data: myReferralCode },
-    { data: sharedPackage },
-  ] = await Promise.all([
+  const [{ data: bookings }, { data: purchases }, { data: activePackage }, { data: inviteCodes }, { data: guestCredits }] = await Promise.all([
     supabase.from('bookings').select('*, yoga_class:yoga_classes(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('purchases').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('user_packages').select('*').eq('user_id', user.id).eq('status', 'active')
       .or(`expires_at.is.null,expires_at.gte.${today}`).order('created_at', { ascending: true }).limit(1).maybeSingle(),
     supabase.from('invite_codes').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('guest_class_credits').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-    // Referral code
-    admin.from('codes').select('code').eq('owner_id', user.id).eq('type', 'referral').maybeSingle(),
-    // Package shared with me
-    admin.from('user_packages').select('*').eq('shared_with_id', user.id).eq('status', 'active')
-      .or(`expires_at.is.null,expires_at.gte.${today}`).maybeSingle(),
   ])
-
-  // Person sharing with me (owner of sharedPackage)
-  let sharedByName: string | null = null
-  if (sharedPackage?.user_id) {
-    const { data: { user: owner } } = await admin.auth.admin.getUserById(sharedPackage.user_id)
-    sharedByName = owner?.user_metadata?.full_name ?? owner?.email ?? null
-  }
-
-  // Person I'm sharing my package with
-  let sharedWithName: string | null = null
-  if (activePackage?.shared_with_id) {
-    const { data: { user: sharedUser } } = await admin.auth.admin.getUserById(activePackage.shared_with_id)
-    sharedWithName = sharedUser?.user_metadata?.full_name ?? sharedUser?.email ?? null
-  }
-
-  const pendingCode = user.user_metadata?.pending_code as string | undefined
-  const hasAppliedCode = !!sharedPackage
 
   const name = user.user_metadata?.full_name ?? user.email
 
@@ -68,79 +31,6 @@ export default async function DashboardPage() {
         <h1 className="text-3xl font-light text-stone-800">Hola, {name?.split(' ')[0]} 👋</h1>
         <p className="text-stone-500 mt-1">{user.email}</p>
       </div>
-
-      {/* Mi código de referido */}
-      {myReferralCode && (
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <Tag className="w-5 h-5 text-[#4a6741]" />
-            <h2 className="text-xl font-medium text-stone-800">Mi código</h2>
-          </div>
-          <div className="bg-white border border-stone-200 rounded-2xl p-6 flex items-center justify-between gap-4">
-            <div>
-              <p className="font-mono font-bold text-stone-800 tracking-widest text-xl">{myReferralCode.code}</p>
-              <p className="text-xs text-stone-400 mt-1">Comparte este código para dar acceso a tu paquete</p>
-            </div>
-            <CopyCodeButton code={myReferralCode.code} />
-          </div>
-        </section>
-      )}
-
-      {/* Compartir paquete / paquete compartido conmigo */}
-      {(activePackage?.is_shareable || sharedPackage) && (
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <Share2 className="w-5 h-5 text-[#4a6741]" />
-            <h2 className="text-xl font-medium text-stone-800">Compartir paquete</h2>
-          </div>
-
-          {/* I'm sharing my package with someone */}
-          {activePackage?.is_shareable && activePackage.shared_with_id && (
-            <div className="bg-[#eef2ec] border border-[#4a6741]/20 rounded-2xl p-6">
-              <p className="font-medium text-stone-800">
-                Compartiendo con{' '}
-                <span className="text-[#4a6741]">{sharedWithName ?? 'un usuario'}</span>
-              </p>
-              <p className="text-sm text-stone-500 mt-1">
-                {activePackage.classes_total !== null
-                  ? `${activePackage.classes_used} de ${activePackage.classes_total} clases usadas en total`
-                  : 'Clases ilimitadas compartidas'}
-              </p>
-            </div>
-          )}
-
-          {/* My shareable package is not yet shared */}
-          {activePackage?.is_shareable && !activePackage.shared_with_id && (
-            <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6">
-              <p className="font-medium text-stone-800 mb-1">Tu paquete es compartible</p>
-              <p className="text-sm text-stone-500">
-                Comparte tu código{' '}
-                {myReferralCode && (
-                  <span className="font-mono font-semibold text-stone-700">{myReferralCode.code}</span>
-                )}{' '}
-                con alguien para que se una a tu paquete.
-              </p>
-            </div>
-          )}
-
-          {/* I'm on someone else's shared package */}
-          {sharedPackage && (
-            <div className="bg-[#eef2ec] border border-[#4a6741]/20 rounded-2xl p-6">
-              <p className="font-medium text-stone-800">
-                Acceso al paquete de{' '}
-                <span className="text-[#4a6741]">{sharedByName ?? 'un usuario'}</span>
-              </p>
-              <p className="text-sm text-stone-500 mt-1">
-                <span className="font-medium text-stone-700">{sharedPackage.package_name}</span>
-                {sharedPackage.classes_total !== null
-                  ? ` · ${sharedPackage.classes_total - sharedPackage.classes_used} de ${sharedPackage.classes_total} clases restantes`
-                  : ' · Clases ilimitadas'}
-                {sharedPackage.expires_at && ` · Vence ${formatDate(sharedPackage.expires_at)}`}
-              </p>
-            </div>
-          )}
-        </section>
-      )}
 
       {/* Paquete activo */}
       <section className="mb-12">
@@ -209,6 +99,11 @@ export default async function DashboardPage() {
                     <p className="text-sm text-stone-500 mt-0.5">
                       {booking.yoga_class && `${formatDate(booking.yoga_class.date)} · ${formatTime(booking.yoga_class.time)}`}
                     </p>
+                    {booking.guest && (
+                      <p className="text-xs text-[#4a6741] flex items-center gap-1 mt-1">
+                        <Users className="w-3 h-3" /> +1 invitado · −2 clases
+                      </p>
+                    )}
                     {booking.yoga_class?.is_online && booking.yoga_class?.zoom_link && (
                       <a
                         href={booking.yoga_class.zoom_link}
@@ -237,7 +132,7 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      {/* Códigos de invitado — mis códigos para compartir */}
+      {/* Códigos de invitado */}
       {inviteCodes && inviteCodes.length > 0 && (
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-6">
@@ -272,26 +167,10 @@ export default async function DashboardPage() {
             <h2 className="text-xl font-medium text-stone-800">Clase de invitado</h2>
           </div>
           <div className="bg-[#eef2ec] border border-[#4a6741]/20 rounded-2xl p-6">
-            <p className="font-medium text-stone-800">Tienes {(guestCredits as any[]).filter((c: any) => c.status === 'available').length} clase{(guestCredits as any[]).filter((c: any) => c.status === 'available').length > 1 ? 's' : ''} de invitado disponible{(guestCredits as any[]).filter((c: any) => c.status === 'available').length > 1 ? 's' : ''} 🎁</p>
+            <p className="font-medium text-stone-800">
+              Tienes {(guestCredits as any[]).filter((c: any) => c.status === 'available').length} clase{(guestCredits as any[]).filter((c: any) => c.status === 'available').length > 1 ? 's' : ''} de invitado disponible{(guestCredits as any[]).filter((c: any) => c.status === 'available').length > 1 ? 's' : ''} 🎁
+            </p>
             <p className="text-sm text-stone-500 mt-1">Ve a <Link href="/clases" className="text-[#4a6741] underline">Clases</Link> y reserva tu lugar.</p>
-          </div>
-        </section>
-      )}
-
-      {/* Aplicar código */}
-      {!hasAppliedCode && (
-        <section className="mb-16">
-          <div className="flex items-center gap-3 mb-4">
-            <Tag className="w-5 h-5 text-[#4a6741]" />
-            <h2 className="text-xl font-medium text-stone-800">¿Tienes un código?</h2>
-          </div>
-          <div className="bg-white border border-stone-200 rounded-2xl p-6">
-            {pendingCode && (
-              <p className="text-sm text-[#4a6741] bg-[#eef2ec] rounded-lg px-3 py-2 mb-3">
-                Tienes un código pendiente de tu registro: <span className="font-mono font-semibold">{pendingCode}</span>
-              </p>
-            )}
-            <ApplyCodeForm defaultCode={pendingCode} />
           </div>
         </section>
       )}
@@ -340,7 +219,6 @@ function StatusBadge({ status }: { status: string }) {
     cancelled: 'Cancelada',
     refunded: 'Reembolsada',
   }
-
   return (
     <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${map[status] ?? 'bg-stone-100 text-stone-500'}`}>
       {labels[status] ?? status}

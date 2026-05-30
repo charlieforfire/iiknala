@@ -60,6 +60,9 @@ export default async function ClasesPage() {
   const bookedIds = new Set((myBookings ?? []).map(b => b.class_id))
   const hasPackage = !!myPackage && (myPackage.classes_total === null || myPackage.classes_used < myPackage.classes_total)
   const hasGuestCredit = !!myGuestCredit
+  const classesRemaining = myPackage
+    ? (myPackage.classes_total === null ? null : myPackage.classes_total - myPackage.classes_used)
+    : 0
   const grouped = groupByDate((classes ?? []) as YogaClass[])
 
   return (
@@ -123,6 +126,8 @@ export default async function ClasesPage() {
                             isLoggedIn={!!user}
                             hasPackage={hasPackage}
                             hasGuestCredit={hasGuestCredit}
+                            spotsLeft={spotsLeft}
+                            classesRemaining={classesRemaining}
                           />
                         </div>
                       </div>

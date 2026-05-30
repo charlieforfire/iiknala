@@ -29,7 +29,6 @@ export default function RegisterPage() {
   const [gender, setGender] = useState('')
   const [phone, setPhone] = useState('')
   const [waiverAccepted, setWaiverAccepted] = useState(false)
-  const [referralCode, setReferralCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
@@ -57,7 +56,6 @@ export default function RegisterPage() {
           gender: gender || null,
           phone: phone || null,
           waiver_accepted: true,
-          pending_code: referralCode.trim().toUpperCase() || null,
         },
       },
     })
@@ -186,20 +184,6 @@ export default function RegisterPage() {
                 onChange={e => setPhone(e.target.value)}
                 className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
                 placeholder="Ej: 9999123456"
-              />
-            </div>
-
-            {/* Código de referido */}
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                ¿Tienes un código? <span className="text-stone-400 font-normal">(opcional)</span>
-              </label>
-              <input
-                type="text"
-                value={referralCode}
-                onChange={e => setReferralCode(e.target.value.toUpperCase())}
-                className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
-                placeholder="Ej: ANA-7K2X"
               />
             </div>
 

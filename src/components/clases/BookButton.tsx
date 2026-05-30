@@ -14,11 +14,14 @@ interface Props {
   isLoggedIn: boolean
   hasPackage: boolean
   hasGuestCredit: boolean
+  spotsLeft: number
+  classesRemaining: number | null
 }
 
 export default function BookButton({
   classId, classTitle, classDate, classTime, instructor,
   isBooked, isFull, isLoggedIn, hasPackage, hasGuestCredit,
+  spotsLeft, classesRemaining,
 }: Props) {
   const [open, setOpen] = useState(false)
 
@@ -38,7 +41,7 @@ export default function BookButton({
     )
   }
 
-  const initialStep: 'login' | 'book' = isLoggedIn ? 'book' : 'login'
+  const initialStep = isLoggedIn ? 'book' : 'login'
 
   return (
     <>
@@ -59,6 +62,8 @@ export default function BookButton({
         initialStep={initialStep}
         initialHasPackage={hasPackage}
         initialHasGuestCredit={hasGuestCredit}
+        spotsLeft={spotsLeft}
+        classesRemaining={classesRemaining}
       />
     </>
   )
