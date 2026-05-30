@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-const MAINTENANCE = true
+const MAINTENANCE = false
 
 export async function proxy(request: NextRequest) {
   if (MAINTENANCE) {
