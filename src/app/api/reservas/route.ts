@@ -22,9 +22,10 @@ export async function POST(req: NextRequest) {
     .from('yoga_classes').select('capacity, enrolled').eq('id', classId).single()
   if (!cls || cls.enrolled >= cls.capacity) return NextResponse.json({ error: 'Clase completa' }, { status: 400 })
 
-  // Buscar paquete activo con clases disponibles
   const today = new Date().toISOString().split('T')[0]
-  const { data: activePkg } = await supabase
+
+  // 1. Own active package with available classes
+  const { data: ownPkg } = await admin
     .from('user_packages')
     .select('*')
     .eq('user_id', user.id)
@@ -32,12 +33,31 @@ export async function POST(req: NextRequest) {
     .or(`expires_at.is.null,expires_at.gte.${today}`)
     .order('created_at', { ascending: true })
     .limit(1)
-    .single()
+    .maybeSingle()
 
-  // Verificar crédito de invitado si no hay paquete activo con clases
-  const hasPackageCredit = activePkg && (activePkg.classes_total === null || activePkg.classes_used < activePkg.classes_total)
+  const hasOwnCredit = ownPkg && (ownPkg.classes_total === null || ownPkg.classes_used < ownPkg.classes_total)
+
+  // 2. Shared package (user is shared_with_id) — used only when own package has no credit
+  let activePkg = hasOwnCredit ? ownPkg : null
+
+  if (!activePkg) {
+    const { data: sharedPkg } = await admin
+      .from('user_packages')
+      .select('*')
+      .eq('shared_with_id', user.id)
+      .eq('status', 'active')
+      .or(`expires_at.is.null,expires_at.gte.${today}`)
+      .maybeSingle()
+
+    if (sharedPkg && (sharedPkg.classes_total === null || sharedPkg.classes_used < sharedPkg.classes_total)) {
+      activePkg = sharedPkg
+    }
+  }
+
+  const hasPackageCredit = !!activePkg
 
   if (!hasPackageCredit) {
+    // Check guest credit
     const { data: guestCredit } = await supabase
       .from('guest_class_credits')
       .select('*')
@@ -49,28 +69,24 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (!guestCredit) {
-      if (!activePkg) return NextResponse.json({ error: 'Necesitas un paquete activo para reservar' }, { status: 400 })
+      if (!ownPkg) return NextResponse.json({ error: 'Necesitas un paquete activo para reservar' }, { status: 400 })
       return NextResponse.json({ error: 'Has usado todas las clases de tu paquete' }, { status: 400 })
     }
 
-    // Usar crédito de invitado
     const { data: newBooking, error: guestBookingError } = await supabase.from('bookings').insert({
       user_id: user.id, class_id: classId, status: 'confirmed',
     }).select('id').single()
     if (guestBookingError) return NextResponse.json({ error: guestBookingError.message }, { status: 500 })
 
     await admin.from('guest_class_credits').update({
-      status: 'used',
-      used_at: new Date().toISOString(),
-      booking_id: newBooking.id,
+      status: 'used', used_at: new Date().toISOString(), booking_id: newBooking.id,
     }).eq('id', guestCredit.id)
 
     await admin.from('yoga_classes').update({ enrolled: cls.enrolled + 1 }).eq('id', classId)
-
     return NextResponse.json({ ok: true })
   }
 
-  // Usar paquete propio
+  // Book and deduct from package (own or shared — same counter)
   const { error } = await supabase.from('bookings').insert({
     user_id: user.id, class_id: classId, status: 'confirmed',
   })

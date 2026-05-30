@@ -8,16 +8,23 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const packageConfig: Record<string, { classes: number | null; days: number | null }> = {
-  'primera-clase':  { classes: 1,    days: null },
-  'clase-suelta':   { classes: 1,    days: null },
-  'pack-4':         { classes: 4,    days: 30 },
-  'pack-8':         { classes: 8,    days: 30 },
-  'pack-12':        { classes: 12,   days: 30 },
-  'pack-16':        { classes: 16,   days: 30 },
-  'ilimitado':      { classes: null, days: 30 },
-  'rocket-suelta':  { classes: 1,    days: null },
-  'rocket-pack':    { classes: 4,    days: 30 },
+const packageConfig: Record<string, { classes: number | null; days: number | null; shareable?: boolean }> = {
+  'primera-clase':             { classes: 1,    days: null },
+  'clase-suelta':              { classes: 1,    days: null },
+  'pack-4':                    { classes: 4,    days: 30 },
+  'pack-8':                    { classes: 8,    days: 30,  shareable: true },
+  'pack-12':                   { classes: 12,   days: 30,  shareable: true },
+  'pack-16':                   { classes: 16,   days: 30,  shareable: true },
+  'ilimitado':                 { classes: null, days: 30,  shareable: true },
+  'ilimitado-3m':              { classes: null, days: 90,  shareable: true },
+  'ilimitado-6m':              { classes: null, days: 180, shareable: true },
+  'ilimitado-12m':             { classes: null, days: 365, shareable: true },
+  'rocket-suelta':             { classes: 1,    days: null },
+  'rocket-pack':               { classes: 4,    days: 30 },
+  'summer-ilimitado-verano':   { classes: null, days: 92 },
+  'summer-ilimitado-jul-ago':  { classes: null, days: 62 },
+  'summer-30-clases':          { classes: 30,   days: 60,  shareable: true },
+  'summer-15-clases':          { classes: 15,   days: 30,  shareable: true },
 }
 
 export async function GET(req: NextRequest) {
@@ -65,6 +72,7 @@ export async function GET(req: NextRequest) {
           expires_at: expiresAt,
           status: 'active',
           stripe_session_id: session.id,
+          is_shareable: config.shareable ?? false,
         }).select('id').single()
 
         if (newPkg) {
