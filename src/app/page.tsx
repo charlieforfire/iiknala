@@ -169,7 +169,7 @@ export default async function HomePage() {
         />
         {/* Imagen mobile */}
         <Image
-          src="/hero-bg-upscaled-4k.jpg"
+          src="/hero-bg-upscaled-4K.jpg"
           alt=""
           fill
           priority
