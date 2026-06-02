@@ -1,0 +1,23 @@
+[
+  { "dia": "Lunes",     "hora": "7:30 AM", "clase": "On Scale Vinyasa",                   "maestro": "@beah.yoga",                  "nivel": ["avanzado", "multinivel"] },
+  { "dia": "Martes",    "hora": "7:30 AM", "clase": "Rocket Yoga",                        "maestro": "@beah.yoga",                  "nivel": ["avanzado", "multinivel"] },
+  { "dia": "Miércoles", "hora": "7:30 AM", "clase": "Yoga Wheel",                         "maestro": "@beah.yoga",                  "nivel": ["avanzado", "multinivel"] },
+  { "dia": "Jueves",    "hora": "7:30 AM", "clase": "On Scale Vinyasa",                   "maestro": "@beah.yoga / @pauparra.yoga", "nivel": ["avanzado", "multinivel"] },
+  { "dia": "Viernes",   "hora": "7:30 AM", "clase": "Hand Balance",                       "maestro": "@fernando_diaz_handbalancer", "nivel": ["avanzado", "multinivel"] },
+
+  { "dia": "Martes",    "hora": "9:00 AM", "clase": "Yoga Suave y Estiramiento Profundo", "maestro": "",                            "nivel": ["principiantes"] },
+  { "dia": "Jueves",    "hora": "9:00 AM", "clase": "Yoga Suave y Estiramiento Profundo", "maestro": "",                            "nivel": ["principiantes"] },
+
+  { "dia": "Sábado",    "hora": "9:30 AM", "clase": "Vinyasa Flow",                       "maestro": "Rotación de maestros",        "nivel": ["avanzado", "multinivel"] },
+
+  { "dia": "Lunes",     "hora": "5:30 PM", "clase": "Yoga Wheel",                         "maestro": "@beah.yoga",                  "nivel": ["multinivel", "principiantes"] },
+  { "dia": "Miércoles", "hora": "5:30 PM", "clase": "Hatha Yoga",                         "maestro": "@fer_hatha",                  "nivel": ["principiantes"] },
+
+  { "dia": "Lunes",     "hora": "7:00 PM", "clase": "Dharma Yoga",                        "maestro": "@pauparra.yoga",              "nivel": ["multinivel", "principiantes"] },
+  { "dia": "Martes",    "hora": "7:00 PM", "clase": "Slow Flow",                          "maestro": "@lorebyoga",                  "nivel": ["avanzado"] },
+  { "dia": "Miércoles", "hora": "7:00 PM", "clase": "Intuitive Flow",                     "maestro": "@beah.yoga",                  "nivel": ["avanzado"] },
+  { "dia": "Jueves",    "hora": "7:00 PM", "clase": "Slow Flow",                          "maestro": "@pauparra.yoga",              "nivel": ["avanzado", "multinivel"] },
+
+  { "dia": "Martes",    "hora": "8:00 PM", "clase": "Hatha Principiantes",                "maestro": "@montseedlr",                 "nivel": ["principiantes"] },
+  { "dia": "Jueves",    "hora": "8:00 PM", "clase": "Hatha Principiantes",                "maestro": "@montseedlr",                 "nivel": ["principiantes"] }
+]
