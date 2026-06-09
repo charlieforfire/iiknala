@@ -76,7 +76,6 @@ export default async function PaquetesPage() {
     <div className="max-w-5xl mx-auto px-4 py-16">
       {/* Header */}
       <div className="text-center mb-16">
-        <p className="text-[#4a6741] text-xs font-medium uppercase tracking-widest mb-4">Mayo 2026</p>
         <h1 className="text-4xl font-light text-stone-800 mb-4">Paquetes iiknala</h1>
         <p className="text-stone-500 max-w-lg mx-auto">
           Todos los paquetes incluyen clases presenciales y vía Zoom.
