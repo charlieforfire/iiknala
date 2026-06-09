@@ -5,23 +5,15 @@ import { useRouter } from 'next/navigation'
 import { Plus, ChevronUp } from 'lucide-react'
 
 interface User { id: string; name: string; email: string }
+interface PackageOption { id: string; nombre: string; clases: number | null; vigencia_dias: number | null }
 
-const PREDEFINED = [
-  { label: 'Primera clase', classes: 1 },
-  { label: 'Clase suelta', classes: 1 },
-  { label: 'Pack 4 clases', classes: 4 },
-  { label: 'Pack 8 clases', classes: 8 },
-  { label: 'Pack 12 clases', classes: 12 },
-  { label: 'Pack 16 clases', classes: 16 },
-  { label: 'Ilimitado mensual', classes: null },
-  { label: 'Ilimitado 3 meses', classes: null },
-  { label: 'Ilimitado 6 meses', classes: null },
-  { label: 'Ilimitado 12 meses', classes: null },
-  { label: 'Rocket suelta', classes: 1 },
-  { label: 'Rocket pack 4', classes: 4 },
-]
-
-export default function AssignPackageForm({ users }: { users: User[] }) {
+export default function AssignPackageForm({
+  users,
+  packages,
+}: {
+  users: User[]
+  packages: PackageOption[]
+}) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -29,16 +21,19 @@ export default function AssignPackageForm({ users }: { users: User[] }) {
   const [success, setSuccess] = useState(false)
 
   const [userId, setUserId] = useState('')
-  const [packageName, setPackageName] = useState('')
+  const [selectedPkgId, setSelectedPkgId] = useState('')
   const [customName, setCustomName] = useState('')
   const [classesTotal, setClassesTotal] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo')
   const [search, setSearch] = useState('')
 
-  const selected = PREDEFINED.find(p => p.label === packageName)
-  const finalClasses = selected ? (selected.classes === null ? '' : String(selected.classes)) : classesTotal
-  const finalName = packageName === '__custom__' ? customName : packageName
+  const selectedPkg = packages.find(p => p.id === selectedPkgId)
+  const isCustom = selectedPkgId === '__custom__'
+  const finalName = isCustom ? customName : (selectedPkg?.nombre ?? '')
+  const finalClasses = isCustom
+    ? (classesTotal || null)
+    : (selectedPkg ? (selectedPkg.clases !== null ? String(selectedPkg.clases) : '') : classesTotal)
 
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -64,7 +59,7 @@ export default function AssignPackageForm({ users }: { users: User[] }) {
     if (!res.ok) { setError(data.error ?? 'Error'); setLoading(false); return }
     setLoading(false)
     setSuccess(true)
-    setUserId(''); setPackageName(''); setCustomName(''); setClassesTotal(''); setExpiresAt(''); setSearch(''); setPaymentMethod('efectivo')
+    setUserId(''); setSelectedPkgId(''); setCustomName(''); setClassesTotal(''); setExpiresAt(''); setSearch(''); setPaymentMethod('efectivo')
     setTimeout(() => setSuccess(false), 2500)
     router.refresh()
   }
@@ -108,46 +103,49 @@ export default function AssignPackageForm({ users }: { users: User[] }) {
                   ))}
                 </div>
               )}
-              {userId && (
-                <p className="text-xs text-[#4a6741] mt-1">✓ Usuario seleccionado</p>
-              )}
+              {userId && <p className="text-xs text-[#4a6741] mt-1">✓ Usuario seleccionado</p>}
             </div>
 
-            {/* Paquete predefinido */}
+            {/* Paquete */}
             <div className="col-span-2">
               <label className="text-xs text-stone-500 uppercase tracking-wide block mb-1">Paquete</label>
               <select
-                value={packageName}
-                onChange={e => setPackageName(e.target.value)}
+                value={selectedPkgId}
+                onChange={e => { setSelectedPkgId(e.target.value); setClassesTotal('') }}
                 className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#4a6741]"
               >
                 <option value="">Selecciona un paquete...</option>
-                {PREDEFINED.map(p => (
-                  <option key={p.label} value={p.label}>{p.label}</option>
+                {packages.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}{p.clases ? ` (${p.clases} clases)` : p.clases === null ? ' (ilimitado)' : ''}
+                  </option>
                 ))}
                 <option value="__custom__">Personalizado...</option>
               </select>
             </div>
 
-            {packageName === '__custom__' && (
+            {isCustom && (
               <div className="col-span-2">
                 <label className="text-xs text-stone-500 uppercase tracking-wide block mb-1">Nombre del paquete</label>
-                <input value={customName} onChange={e => setCustomName(e.target.value)} className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#4a6741]" />
+                <input
+                  value={customName}
+                  onChange={e => setCustomName(e.target.value)}
+                  className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#4a6741]"
+                />
               </div>
             )}
 
-            {/* Clases totales (solo si no está predefinido) */}
-            {(packageName === '__custom__' || (selected && selected.classes !== null)) && (
+            {(isCustom || (selectedPkg && selectedPkg.clases !== null)) && (
               <div>
                 <label className="text-xs text-stone-500 uppercase tracking-wide block mb-1">Número de clases</label>
                 <input
                   type="number"
                   min="1"
-                  value={packageName === '__custom__' ? classesTotal : finalClasses}
+                  value={isCustom ? classesTotal : (selectedPkg?.clases ?? '')}
                   onChange={e => setClassesTotal(e.target.value)}
                   placeholder="Vacío = ilimitado"
+                  readOnly={!isCustom && !!selectedPkg?.clases}
                   className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#4a6741]"
-                  readOnly={!!(selected && selected.classes !== null)}
                 />
               </div>
             )}
@@ -166,7 +164,12 @@ export default function AssignPackageForm({ users }: { users: User[] }) {
 
             <div>
               <label className="text-xs text-stone-500 uppercase tracking-wide block mb-1">Fecha de vencimiento (opcional)</label>
-              <input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#4a6741]" />
+              <input
+                type="date"
+                value={expiresAt}
+                onChange={e => setExpiresAt(e.target.value)}
+                className="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#4a6741]"
+              />
             </div>
           </div>
 

@@ -8,25 +8,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const packageConfig: Record<string, { classes: number | null; days: number | null; shareable?: boolean }> = {
-  'primera-clase':             { classes: 1,    days: null },
-  'clase-suelta':              { classes: 1,    days: null },
-  'pack-4':                    { classes: 4,    days: 30 },
-  'pack-8':                    { classes: 8,    days: 30,  shareable: true },
-  'pack-12':                   { classes: 12,   days: 30,  shareable: true },
-  'pack-16':                   { classes: 16,   days: 30,  shareable: true },
-  'ilimitado':                 { classes: null, days: 30,  shareable: true },
-  'ilimitado-3m':              { classes: null, days: 90,  shareable: true },
-  'ilimitado-6m':              { classes: null, days: 180, shareable: true },
-  'ilimitado-12m':             { classes: null, days: 365, shareable: true },
-  'rocket-suelta':             { classes: 1,    days: null },
-  'rocket-pack':               { classes: 4,    days: 30 },
-  'summer-ilimitado-verano':   { classes: null, days: 92 },
-  'summer-ilimitado-jul-ago':  { classes: null, days: 62 },
-  'summer-30-clases':          { classes: 30,   days: 60,  shareable: true },
-  'summer-15-clases':          { classes: 15,   days: 30,  shareable: true },
-}
-
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get('session_id')
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
@@ -58,21 +39,30 @@ export async function GET(req: NextRequest) {
         .from('user_packages').select('id').eq('stripe_session_id', session.id).single()
 
       if (!existing) {
-        const config = packageConfig[paqueteId] ?? { classes: 1, days: 30 }
-        const expiresAt = config.days
-          ? new Date(Date.now() + config.days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        const { data: pkgConfig } = await supabase
+          .from('packages')
+          .select('clases, vigencia_dias, is_shareable')
+          .eq('id', paqueteId)
+          .single()
+
+        const classes = pkgConfig?.clases ?? 1
+        const days = pkgConfig?.vigencia_dias ?? null
+        const shareable = pkgConfig?.is_shareable ?? false
+
+        const expiresAt = days
+          ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
           : null
 
         const { data: newPkg } = await supabase.from('user_packages').insert({
           user_id: userId,
           package_id: paqueteId,
           package_name: nombre ?? paqueteId,
-          classes_total: config.classes,
+          classes_total: classes,
           classes_used: 0,
           expires_at: expiresAt,
           status: 'active',
           stripe_session_id: session.id,
-          is_shareable: config.shareable ?? false,
+          is_shareable: shareable,
         }).select('id').single()
 
         if (newPkg) {

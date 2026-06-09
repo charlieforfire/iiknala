@@ -4,6 +4,8 @@ import { isAdminAuthed } from '@/lib/admin-auth'
 import AdminNav from '@/components/admin/AdminNav'
 import AdminLogout from '@/components/admin/AdminLogout'
 import AssignPackageForm from '@/components/admin/AssignPackageForm'
+import PackageCatalogManager from '@/components/admin/PackageCatalogManager'
+import type { CatalogPackage } from '@/components/admin/PackageCatalogManager'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,16 +23,19 @@ function fmtDate(str: string) {
 export default async function PaquetesPage() {
   if (!await isAdminAuthed()) redirect('/admin/login')
 
-  const { data: { users } } = await adminDb.auth.admin.listUsers({ perPage: 200 })
-
-  const { data: packagesRaw } = await adminDb
-    .from('user_packages')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [
+    { data: { users } },
+    { data: packagesRaw },
+    { data: catalogRaw },
+  ] = await Promise.all([
+    adminDb.auth.admin.listUsers({ perPage: 200 }),
+    adminDb.from('user_packages').select('*').order('created_at', { ascending: false }),
+    adminDb.from('packages').select('*').order('sort_order'),
+  ])
 
   const packages = packagesRaw ?? []
+  const catalog: CatalogPackage[] = catalogRaw ?? []
 
-  // Enriquecer con info de usuario
   const userMap: Record<string, { name: string; email: string }> = {}
   for (const u of users) {
     userMap[u.id] = {
@@ -43,6 +48,13 @@ export default async function PaquetesPage() {
     id: u.id,
     name: u.user_metadata?.full_name ?? '',
     email: u.email ?? '',
+  }))
+
+  const packageOptions = catalog.map(p => ({
+    id: p.id,
+    nombre: p.nombre,
+    clases: p.clases,
+    vigencia_dias: p.vigencia_dias,
   }))
 
   const activos = packages.filter((p: any) => p.status === 'active')
@@ -60,7 +72,7 @@ export default async function PaquetesPage() {
 
       <AdminNav active="paquetes" />
 
-      <AssignPackageForm users={userList} />
+      <AssignPackageForm users={userList} packages={packageOptions} />
 
       {/* Resumen */}
       <div className="grid grid-cols-3 gap-4 mb-10">
@@ -131,7 +143,7 @@ export default async function PaquetesPage() {
 
       {/* Histórico */}
       {inactivos.length > 0 && (
-        <section>
+        <section className="mb-10">
           <h2 className="text-lg font-medium text-stone-700 mb-4">Agotados / Expirados ({inactivos.length})</h2>
           <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden opacity-70">
             {inactivos.map((p: any) => {
@@ -151,6 +163,9 @@ export default async function PaquetesPage() {
           </div>
         </section>
       )}
+
+      {/* Catálogo */}
+      <PackageCatalogManager initialPackages={catalog} />
     </div>
   )
 }
