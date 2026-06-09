@@ -23,18 +23,12 @@ function fmtDate(str: string) {
 export default async function PaquetesPage() {
   if (!await isAdminAuthed()) redirect('/admin/login')
 
-  const [
-    { data: { users } },
-    { data: packagesRaw },
-    { data: catalogRaw },
-  ] = await Promise.all([
-    adminDb.auth.admin.listUsers({ perPage: 200 }),
-    adminDb.from('user_packages').select('*').order('created_at', { ascending: false }),
-    adminDb.from('packages').select('*').order('sort_order'),
-  ])
+  const { data: { users } } = await adminDb.auth.admin.listUsers({ perPage: 200 })
+  const { data: packagesRaw } = await adminDb.from('user_packages').select('*').order('created_at', { ascending: false })
+  const { data: catalogRaw } = await adminDb.from('packages').select('*').order('sort_order')
 
   const packages = packagesRaw ?? []
-  const catalog: CatalogPackage[] = catalogRaw ?? []
+  const catalog: CatalogPackage[] = (catalogRaw ?? []) as CatalogPackage[]
 
   const userMap: Record<string, { name: string; email: string }> = {}
   for (const u of users) {
