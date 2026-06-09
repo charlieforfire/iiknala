@@ -49,7 +49,7 @@ export default async function PaquetesPage() {
       <div className="text-center mb-16">
         <h1 className="text-4xl font-light text-stone-800 mb-4">Paquetes iiknala</h1>
         <p className="text-stone-500 max-w-lg mx-auto">
-          Todos los paquetes incluyen clases presenciales y vía Zoom.
+          Clases presenciales en Mérida. Los paquetes ilimitados incluyen acceso vía Zoom.
         </p>
       </div>
 
@@ -192,9 +192,10 @@ export default async function PaquetesPage() {
         </>
       )}
 
-      <p className="text-center text-xs text-stone-400">
-        * Todos los paquetes incluyen clases presenciales y vía Zoom · Precios en MXN
-      </p>
+      <div className="text-center space-y-1">
+        <p className="text-xs text-stone-400">Precios en MXN · Paquetes ilimitados incluyen acceso vía Zoom</p>
+        <p className="text-xs text-stone-500">Paga con transferencia o efectivo y recibe un 3% de descuento</p>
+      </div>
     </div>
   )
 }
