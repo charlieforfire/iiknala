@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatPrice, isSummerPromo } from '@/lib/utils'
 import { Check } from 'lucide-react'
 import PaqueteButton from '@/components/paquetes/PaqueteButton'
+import TransferenciaButton from '@/components/paquetes/TransferenciaButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -46,7 +47,10 @@ export default async function PaquetesPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-16">
       {/* Header */}
-      <div className="text-center mb-16">
+      <div className="relative text-center mb-16">
+        <div className="absolute right-0 top-0">
+          <TransferenciaButton />
+        </div>
         <h1 className="text-4xl font-light text-stone-800 mb-4">Paquetes iiknala</h1>
         <p className="text-stone-500 max-w-lg mx-auto">
           Clases presenciales en Mérida. Los paquetes ilimitados incluyen acceso vía Zoom.
