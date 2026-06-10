@@ -20,6 +20,7 @@ export default function EditClassForm({ cls }: { cls: ClassData }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [applyAll, setApplyAll] = useState(false)
   const [form, setForm] = useState({
     title: cls.title,
     date: cls.date,
@@ -37,13 +38,25 @@ export default function EditClassForm({ cls }: { cls: ClassData }) {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`/api/admin/clases/${cls.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      if (applyAll) {
+        // Bulk: send all fields except date (each class keeps its own date)
+        const { date: _ignored, ...bulkFields } = form
+        const res = await fetch('/api/admin/clases/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ update: bulkFields, sourceDate: cls.date }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
+      } else {
+        const res = await fetch(`/api/admin/clases/${cls.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
+      }
       setOpen(false)
       router.refresh()
     } catch (e: any) {
@@ -63,6 +76,12 @@ export default function EditClassForm({ cls }: { cls: ClassData }) {
       </button>
     )
   }
+
+  // Compute weekday label from cls.date for the checkbox label
+  const weekdayLabel = new Date(cls.date + 'T00:00:00Z').toLocaleDateString('es-MX', {
+    weekday: 'long',
+    timeZone: 'UTC',
+  })
 
   return (
     <div className="mt-3 border-t border-stone-100 pt-3">
@@ -124,6 +143,21 @@ export default function EditClassForm({ cls }: { cls: ClassData }) {
         </div>
       </div>
 
+      {/* Bulk weekday checkbox */}
+      <div className={`flex items-start gap-2 rounded-lg px-3 py-2.5 mb-3 border transition-colors ${applyAll ? 'bg-amber-50 border-amber-200' : 'bg-stone-50 border-stone-200'}`}>
+        <input
+          type="checkbox"
+          id={`bulk-${cls.id}`}
+          checked={applyAll}
+          onChange={e => setApplyAll(e.target.checked)}
+          className="accent-[#4a6741] mt-0.5 flex-shrink-0"
+        />
+        <label htmlFor={`bulk-${cls.id}`} className="text-xs text-stone-600 leading-relaxed cursor-pointer">
+          Aplicar cambios a todos los <span className="font-semibold text-stone-800 capitalize">{weekdayLabel}s</span> de este mes
+          {applyAll && <span className="block text-amber-600 mt-0.5">La fecha no se modifica — cada clase conserva su día.</span>}
+        </label>
+      </div>
+
       {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
 
       <div className="flex items-center gap-2">
@@ -133,10 +167,10 @@ export default function EditClassForm({ cls }: { cls: ClassData }) {
           className="inline-flex items-center gap-1.5 text-xs bg-[#4a6741] hover:bg-[#3a5232] disabled:opacity-60 text-white px-4 py-2 rounded-lg transition-colors"
         >
           {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-          Guardar
+          {applyAll ? 'Guardar para todos' : 'Guardar'}
         </button>
         <button
-          onClick={() => { setOpen(false); setError('') }}
+          onClick={() => { setOpen(false); setError(''); setApplyAll(false) }}
           className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 px-3 py-2 transition-colors"
         >
           <X className="w-3 h-3" /> Cancelar
