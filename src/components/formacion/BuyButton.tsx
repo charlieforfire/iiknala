@@ -39,7 +39,7 @@ export default function BuyButton({ formationId, hasPurchased, isLoggedIn }: Pro
     setError('')
 
     const isContado = modalidad === 'contado'
-    const precio = isContado ? 3650000 : 600000 // centavos MXN
+    const precio = isContado ? 3650000 : 617700 // centavos MXN
     const nombre = isContado
       ? 'iiknala YTT 200H — Pago de contado'
       : 'iiknala YTT 200H — Pago en parcialidades (1 de 7)'
@@ -77,7 +77,7 @@ export default function BuyButton({ formationId, hasPurchased, isLoggedIn }: Pro
         disabled={loading !== null}
         className="w-full py-3.5 rounded-xl border-2 border-[#4a6741] hover:bg-[#4a6741]/5 disabled:opacity-60 text-[#4a6741] font-medium transition-colors"
       >
-        {loading === 'parcialidades' ? 'Redirigiendo...' : 'Pago en parcialidades — 7 × $6,000 MXN'}
+        {loading === 'parcialidades' ? 'Redirigiendo...' : 'Pago en parcialidades — 7 × $6,177 MXN'}
       </button>
 
       {error && <p className="text-red-600 text-xs text-center">{error}</p>}
