@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice, isSummerPromo } from '@/lib/utils'
-import { Check } from 'lucide-react'
 import PaqueteButton from '@/components/paquetes/PaqueteButton'
 import TransferenciaButton from '@/components/paquetes/TransferenciaButton'
 import type { Metadata } from 'next'
@@ -128,11 +127,6 @@ export default async function PaquetesPage() {
                     {p.clases ?? 'Ilimitado'}
                     {p.destacado && <span className="ml-2 text-xs bg-[#4a6741] text-white px-2 py-0.5 rounded-full">Popular</span>}
                   </p>
-                  {p.extras?.length > 0 && (
-                    <p className="text-xs text-[#4a6741] flex items-center gap-1 mt-0.5">
-                      <Check className="w-3 h-3" /> {p.extras[0]}
-                    </p>
-                  )}
                 </div>
                 <p className="text-stone-500 text-sm">{p.vigencia_dias ? `${p.vigencia_dias} días` : 'Sin vigencia'}</p>
                 <p className="text-lg font-light text-stone-800">{formatPrice(p.precio)}</p>
