@@ -47,13 +47,13 @@ export default async function PaquetesPage() {
     <div className="max-w-5xl mx-auto px-4 py-16">
       {/* Header */}
       <div className="relative text-center mb-16">
-        <div className="absolute right-0 top-0">
-          <TransferenciaButton />
-        </div>
         <h1 className="text-4xl font-light text-stone-800 mb-4">Paquetes iiknala</h1>
         <p className="text-stone-500 max-w-lg mx-auto">
           Clases presenciales en Mérida. Los paquetes ilimitados incluyen acceso vía Zoom.
         </p>
+        <div className="mt-6 flex justify-center sm:absolute sm:right-0 sm:top-0 sm:mt-0">
+          <TransferenciaButton />
+        </div>
       </div>
 
       {/* Summer Promo */}
