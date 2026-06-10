@@ -381,7 +381,7 @@ export default async function FormacionPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-stone-600">Diploma Yoga Alliance</span>
-                <span className="font-medium text-stone-800">$3,090 MXN</span>
+                <span className="font-medium text-stone-800">$3,000 MXN</span>
               </div>
             </div>
             <p className="text-xs text-stone-400">* Las mensualidades se pagan a lo largo de los 7 meses de formación.</p>
