@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import SummerPromoBanner from '@/components/layout/SummerPromoBanner'
+import GoogleAnalytics from '@/components/layout/GoogleAnalytics'
 import { createClient } from '@/lib/supabase/server'
 import { isSummerPromo } from '@/lib/utils'
 
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="google-site-verification" content="88ytuynoy6KT0kRN01rVBnjR3e4Nq2UF9QD1DEbEsjw" />
       </head>
       <body className={`${dmSans.className} min-h-full flex flex-col bg-stone-50 text-stone-900`}>
+        <GoogleAnalytics />
         {showBanner && <SummerPromoBanner />}
         <Navbar user={user} showBanner={showBanner} />
         <main className={`flex-1 ${showBanner ? 'pt-[104px]' : 'pt-16'}`}>
