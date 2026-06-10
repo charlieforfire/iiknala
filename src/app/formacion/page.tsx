@@ -392,7 +392,7 @@ export default async function FormacionPage() {
           <div className="flex flex-col gap-4">
             <div className="bg-[#4a6741] text-white rounded-2xl p-7">
               <p className="text-xs text-white/70 uppercase tracking-wide mb-2">Pago de contado</p>
-              <p className="text-3xl font-light mb-1">$37,562</p>
+              <p className="text-3xl font-light mb-1">$36,500</p>
               <p className="text-white/70 text-sm mb-4">MXN · Efectivo o transferencia</p>
               <p className="text-xs text-white/60">Deberá realizarse antes del primer módulo.</p>
             </div>
