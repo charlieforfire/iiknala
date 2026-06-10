@@ -372,7 +372,7 @@ export default async function FormacionPage() {
           {/* Mensualidades */}
           <div className="bg-white border border-stone-200 rounded-2xl p-8 md:col-span-2">
             <p className="text-xs text-stone-400 uppercase tracking-wide mb-3">Pago en mensualidades</p>
-            <p className="text-5xl font-light text-stone-800 mb-1">$43,221</p>
+            <p className="text-5xl font-light text-stone-800 mb-1">$43,239</p>
             <p className="text-stone-400 text-sm mb-6">MXN · Total</p>
             <div className="flex flex-col gap-3 mb-8">
               <div className="flex justify-between text-sm border-b border-stone-100 pb-3">
@@ -425,7 +425,11 @@ export default async function FormacionPage() {
           </div>
         </div>
 
-        <p className="text-center text-stone-400 text-xs mt-6">* Descuentos no acumulables. Costos de hospedaje para el retiro final no incluídos.</p>
+        <div className="mt-6 flex items-start gap-2 bg-[#4a6741]/8 border border-[#4a6741]/20 rounded-xl px-5 py-4">
+          <span className="text-[#4a6741] text-lg leading-none">✦</span>
+          <p className="text-sm text-stone-600">Al pagar en <strong className="text-stone-800">efectivo o transferencia</strong> recibes un <strong className="text-stone-800">3% de descuento</strong> sobre el total.</p>
+        </div>
+        <p className="text-center text-stone-400 text-xs mt-4">* Descuentos no acumulables. Costos de hospedaje para el retiro final no incluídos.</p>
       </section>
 
     </div>
