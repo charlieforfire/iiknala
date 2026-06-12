@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac } from 'crypto'
 import { getResend, FROM } from '@/lib/resend'
 import { accountConfirmationHtml, accountConfirmationText } from '@/lib/emails/account-confirmation'
 
@@ -6,18 +7,34 @@ import { accountConfirmationHtml, accountConfirmationText } from '@/lib/emails/a
 // Configure in: Supabase Dashboard → Authentication → Hooks → Send Email
 // Hook URL: https://www.iiknalayoga.com/api/auth/hooks
 
+function verifySignature(secret: string, body: string, signature: string, timestamp: string): boolean {
+  try {
+    const base64Secret = secret.replace(/^v1,whsec_/, '')
+    const keyBuffer = Buffer.from(base64Secret, 'base64')
+    const signedContent = `${timestamp}.${body}`
+    const hmac = createHmac('sha256', keyBuffer)
+    hmac.update(signedContent)
+    const computed = `v1,${hmac.digest('base64')}`
+    return computed === signature
+  } catch {
+    return false
+  }
+}
+
 export async function POST(req: NextRequest) {
-  // Validate the hook secret to ensure the request is from Supabase
   const hookSecret = process.env.SUPABASE_HOOK_SECRET
+
+  const rawBody = await req.text()
+
   if (hookSecret) {
     const signature = req.headers.get('x-supabase-signature') ?? ''
-    if (signature !== hookSecret) {
+    const timestamp = req.headers.get('x-webhook-timestamp') ?? ''
+    if (!verifySignature(hookSecret, rawBody, signature, timestamp)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
   }
 
-  const body = await req.json()
-  const { user, email_data } = body as {
+  const body = JSON.parse(rawBody) as {
     user: { email: string; user_metadata?: { full_name?: string } }
     email_data: {
       email_action_type: string
@@ -26,6 +43,8 @@ export async function POST(req: NextRequest) {
       site_url: string
     }
   }
+
+  const { user, email_data } = body
 
   // Only handle signup confirmation
   if (email_data?.email_action_type !== 'signup') {
@@ -47,7 +66,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('[auth-hook] Error sending confirmation email:', err)
     // Never block registration due to email failure
-    return NextResponse.json({ ok: true })
   }
 
   return NextResponse.json({ ok: true })
