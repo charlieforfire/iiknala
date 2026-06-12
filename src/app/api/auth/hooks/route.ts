@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
   }
 
   const userName = user?.user_metadata?.full_name ?? user.email.split('@')[0]
-  const confirmUrl = `${email_data.site_url}/auth/v1/verify?token=${email_data.token_hash}&type=signup&redirect_to=${encodeURIComponent(email_data.redirect_to)}`
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const confirmUrl = `${supabaseUrl}/auth/v1/verify?token=${email_data.token_hash}&type=signup&redirect_to=${encodeURIComponent(email_data.redirect_to)}`
 
   try {
     const resend = getResend()
