@@ -1,30 +1,38 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
+export default function NuevaContrasenaPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (password !== confirm) {
+      setError('Las contraseñas no coinciden.')
+      return
+    }
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.')
+      return
+    }
+
     setLoading(true)
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.updateUser({ password })
 
     if (error) {
-      setError('Email o contraseña incorrectos.')
+      setError('No pudimos actualizar tu contraseña. El link puede haber expirado.')
       setLoading(false)
       return
     }
@@ -38,24 +46,13 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Image src="/logo.png" alt="iiknala" width={160} height={48} className="h-12 w-auto mx-auto mb-4 object-contain" />
-          <h1 className="text-2xl font-light text-stone-800">Bienvenida de vuelta</h1>
+          <h1 className="text-2xl font-light text-stone-800">Nueva contraseña</h1>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">Email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
-                placeholder="tu@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">Contraseña</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Nueva contraseña</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -74,30 +71,28 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Confirmar contraseña</label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
+                placeholder="••••••••"
+              />
+            </div>
 
             {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg px-4 py-3">{error}</p>}
-
-            <div className="text-right -mt-2">
-              <Link href="/auth/reset" className="text-xs text-stone-400 hover:text-[#4a6741] transition-colors">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
 
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-[#4a6741] hover:bg-[#3a5232] disabled:opacity-60 text-white py-3 rounded-xl font-medium transition-colors"
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? 'Guardando...' : 'Guardar nueva contraseña'}
             </button>
           </form>
-
-          <p className="text-center text-sm text-stone-500 mt-6">
-            ¿No tienes cuenta?{' '}
-            <Link href="/auth/register" className="text-[#4a6741] font-medium hover:underline">
-              Regístrate gratis
-            </Link>
-          </p>
         </div>
       </div>
     </div>
