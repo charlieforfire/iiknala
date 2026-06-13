@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { LogOut } from 'lucide-react'
+import { LogOut, Package } from 'lucide-react'
 
 export default function TeacherHeader() {
   const router = useRouter()
@@ -23,6 +23,12 @@ export default function TeacherHeader() {
           </Link>
           <span className="text-stone-300">|</span>
           <span className="text-sm text-stone-500 font-medium">Portal Maestros</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <Link href="/maestros" className="text-sm text-stone-500 hover:text-stone-800 transition-colors">Clases</Link>
+          <Link href="/maestros/paquetes" className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-[#4a6741] transition-colors">
+            <Package className="w-4 h-4" /> Asignar paquete
+          </Link>
         </div>
         <button
           onClick={handleLogout}
