@@ -4,10 +4,10 @@ import { teacherToken } from '@/lib/teacher-auth'
 export async function POST(req: NextRequest) {
   const { username, password } = await req.json()
 
-  const expectedU = process.env.TEACHER_USERNAME ?? ''
-  const expectedP = process.env.TEACHER_PASSWORD ?? ''
+  const expectedU = process.env.TEACHER_USERNAME
+  const expectedP = process.env.TEACHER_PASSWORD
 
-  if (username !== expectedU || password !== expectedP) {
+  if (!expectedU || !expectedP || username !== expectedU || password !== expectedP) {
     return NextResponse.json({ error: 'Credenciales incorrectas' }, { status: 401 })
   }
 

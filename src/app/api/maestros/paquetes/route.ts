@@ -8,7 +8,7 @@ const adminDb = createAdmin(
 )
 
 function calcExpiresAt(vigencia_dias: number | null): string | null {
-  if (!vigencia_dias) return null
+  if (vigencia_dias === null || vigencia_dias === undefined) return null
   const d = new Date()
   d.setDate(d.getDate() + vigencia_dias)
   return d.toISOString().split('T')[0]

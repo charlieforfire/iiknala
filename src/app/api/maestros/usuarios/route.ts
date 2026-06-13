@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ users: [] })
   }
 
-  const { data: { users }, error } = await adminDb.auth.admin.listUsers({ perPage: 100 })
+  const { data: { users }, error } = await adminDb.auth.admin.listUsers({ perPage: 1000 })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const matches = (users ?? [])

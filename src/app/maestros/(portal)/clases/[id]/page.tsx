@@ -30,19 +30,19 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
 
   const studentIds = [...new Set((bookings ?? []).map(b => b.user_id))]
 
-  // Get user info
+  // Get user info — single listUsers call to avoid N+1 Auth Admin requests
   const userDetails: Record<string, { full_name: string; email: string }> = {}
-  await Promise.all(
-    studentIds.map(async uid => {
-      const { data: { user } } = await adminDb.auth.admin.getUserById(uid)
-      if (user) {
-        userDetails[uid] = {
-          full_name: user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? uid,
-          email: user.email ?? '',
+  if (studentIds.length) {
+    const { data: { users: allUsers } } = await adminDb.auth.admin.listUsers({ perPage: 1000 })
+    for (const u of allUsers ?? []) {
+      if (studentIds.includes(u.id)) {
+        userDetails[u.id] = {
+          full_name: u.user_metadata?.full_name ?? u.email?.split('@')[0] ?? u.id,
+          email: u.email ?? '',
         }
       }
-    })
-  )
+    }
+  }
 
   // Get active packages
   const today = new Date().toISOString().split('T')[0]

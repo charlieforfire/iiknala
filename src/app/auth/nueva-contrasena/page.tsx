@@ -37,6 +37,7 @@ export default function NuevaContrasenaPage() {
       return
     }
 
+    setLoading(false)
     router.push('/dashboard')
     router.refresh()
   }
