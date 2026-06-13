@@ -21,6 +21,7 @@ export default function AsignarPaqueteForm({ packages }: { packages: PkgOption[]
   const [results, setResults] = useState<UserResult[]>([])
   const [selectedUser, setSelectedUser] = useState<UserResult | null>(null)
   const [selectedPkg, setSelectedPkg] = useState(packages[0]?.id ?? '')
+  const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo')
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [toast, setToast] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null)
@@ -58,7 +59,7 @@ export default function AsignarPaqueteForm({ packages }: { packages: PkgOption[]
       const res = await fetch('/api/maestros/paquetes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: selectedUser.id, package_id: selectedPkg }),
+        body: JSON.stringify({ user_id: selectedUser.id, package_id: selectedPkg, payment_method: paymentMethod }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -66,6 +67,7 @@ export default function AsignarPaqueteForm({ packages }: { packages: PkgOption[]
       setSelectedUser(null)
       setQuery('')
       setResults([])
+      setPaymentMethod('efectivo')
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error al asignar paquete.'
       setToast({ type: 'err', msg })
@@ -143,6 +145,27 @@ export default function AsignarPaqueteForm({ packages }: { packages: PkgOption[]
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Payment method */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-stone-700 mb-2">Método de pago</label>
+        <div className="flex gap-3">
+          {(['efectivo', 'transferencia'] as const).map(method => (
+            <button
+              key={method}
+              type="button"
+              onClick={() => setPaymentMethod(method)}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors capitalize ${
+                paymentMethod === method
+                  ? 'bg-[#4a6741] text-white border-[#4a6741]'
+                  : 'bg-white text-stone-600 border-stone-300 hover:border-[#4a6741]/50'
+              }`}
+            >
+              {method}
+            </button>
+          ))}
+        </div>
       </div>
 
       {toast && (

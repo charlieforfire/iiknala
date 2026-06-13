@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   }
 
-  const { user_id, package_id } = await req.json()
+  const { user_id, package_id, payment_method } = await req.json()
   if (!user_id || !package_id) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     classes_used: 0,
     status: 'active',
     expires_at: calcExpiresAt(pkg.vigencia_dias),
-    stripe_session_id: `manual_teacher_${crypto.randomUUID()}`,
+    stripe_session_id: `manual_${payment_method ?? 'efectivo'}_${crypto.randomUUID()}`,
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
