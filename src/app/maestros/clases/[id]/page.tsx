@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { isTeacherAuthed } from '@/lib/teacher-auth'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, Users } from 'lucide-react'
@@ -12,21 +12,16 @@ const adminDb = createAdmin(
 
 export default async function ClaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/maestros/login')
+  if (!await isTeacherAuthed()) redirect('/maestros/login')
 
-  // Verify this class belongs to this teacher
   const { data: cls } = await adminDb
     .from('yoga_classes')
-    .select('id, title, date, time, capacity, enrolled')
+    .select('id, title, date, time, instructor, capacity, enrolled')
     .eq('id', id)
-    .eq('teacher_id', user.id)
     .single()
 
   if (!cls) notFound()
 
-  // Get confirmed bookings for this class
   const { data: bookings } = await adminDb
     .from('bookings')
     .select('id, user_id, status, guest')
@@ -35,26 +30,26 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
 
   const studentIds = [...new Set((bookings ?? []).map(b => b.user_id))]
 
-  // Get user info from auth
+  // Get user info
   const userDetails: Record<string, { full_name: string; email: string }> = {}
   await Promise.all(
     studentIds.map(async uid => {
-      const { data: { user: u } } = await adminDb.auth.admin.getUserById(uid)
-      if (u) {
+      const { data: { user } } = await adminDb.auth.admin.getUserById(uid)
+      if (user) {
         userDetails[uid] = {
-          full_name: u.user_metadata?.full_name ?? u.email?.split('@')[0] ?? uid,
-          email: u.email ?? '',
+          full_name: user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? uid,
+          email: user.email ?? '',
         }
       }
     })
   )
 
-  // Get active packages for each student
+  // Get active packages
   const today = new Date().toISOString().split('T')[0]
   const { data: userPackages } = studentIds.length
     ? await adminDb
         .from('user_packages')
-        .select('user_id, package_name, classes_total, classes_used, status, expires_at')
+        .select('user_id, package_name, classes_total, classes_used')
         .in('user_id', studentIds)
         .eq('status', 'active')
         .or(`expires_at.is.null,expires_at.gte.${today}`)
@@ -65,7 +60,7 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
     if (!packagesByUser[pkg.user_id]) packagesByUser[pkg.user_id] = pkg
   }
 
-  // Get active packages catalog for assignment modal
+  // Packages catalog for assignment modal
   const { data: catalogPackages } = await adminDb
     .from('packages')
     .select('id, nombre, clases, vigencia_dias')
@@ -79,10 +74,9 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
       <Link href="/maestros" className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6 transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Mis clases
+        <ArrowLeft className="w-4 h-4" /> Todas las clases
       </Link>
 
-      {/* Class info card */}
       <div className="bg-white rounded-2xl border border-stone-200 px-6 py-5 mb-8">
         <h1 className="text-xl font-medium text-stone-800 mb-2">{cls.title}</h1>
         <div className="flex flex-wrap items-center gap-5 text-sm text-stone-500">
@@ -93,8 +87,9 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
             <Clock className="w-3.5 h-3.5" />{cls.time.slice(0, 5)}
           </span>
           <span className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5" />{cls.enrolled} / {cls.capacity} alumnos
+            <Users className="w-3.5 h-3.5" />{cls.enrolled} / {cls.capacity}
           </span>
+          <span className="text-stone-400">{cls.instructor}</span>
         </div>
       </div>
 
@@ -116,10 +111,7 @@ export default async function ClaseDetailPage({ params }: { params: Promise<{ id
               : null
 
             return (
-              <div
-                key={booking.id}
-                className="bg-white rounded-2xl border border-stone-200 px-6 py-4 flex items-center justify-between gap-4"
-              >
+              <div key={booking.id} className="bg-white rounded-2xl border border-stone-200 px-6 py-4 flex items-center justify-between gap-4">
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <span className="font-medium text-stone-800 truncate">{info?.full_name ?? 'Alumno'}</span>
                   <span className="text-sm text-stone-500 truncate">{info?.email}</span>

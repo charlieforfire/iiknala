@@ -4,11 +4,10 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 export default function MaestrosLoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -19,25 +18,14 @@ export default function MaestrosLoginPage() {
     setLoading(true)
     setError('')
 
-    const supabase = createClient()
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    const res = await fetch('/api/maestros/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    })
 
-    if (signInError || !data.user) {
-      setError('Email o contraseña incorrectos.')
-      setLoading(false)
-      return
-    }
-
-    // Verify this user is registered as a teacher
-    const { data: teacher } = await supabase
-      .from('teachers')
-      .select('id')
-      .eq('id', data.user.id)
-      .single()
-
-    if (!teacher) {
-      await supabase.auth.signOut()
-      setError('Esta cuenta no tiene acceso al portal de maestros.')
+    if (!res.ok) {
+      setError('Usuario o contraseña incorrectos.')
       setLoading(false)
       return
     }
@@ -58,14 +46,14 @@ export default function MaestrosLoginPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Usuario</label>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
                 className="w-full border border-stone-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4a6741] focus:border-transparent"
-                placeholder="tu@email.com"
+                placeholder="usuario"
               />
             </div>
             <div>

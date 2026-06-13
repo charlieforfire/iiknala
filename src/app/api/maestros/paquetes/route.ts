@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/server'
+import { isTeacherAuthed } from '@/lib/teacher-auth'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,18 +15,9 @@ function calcExpiresAt(vigencia_dias: number | null): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  // Verify caller is an authenticated teacher
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-
-  const { data: teacher } = await adminDb
-    .from('teachers')
-    .select('id')
-    .eq('id', user.id)
-    .single()
-
-  if (!teacher) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  if (!await isTeacherAuthed()) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  }
 
   const { user_id, package_id } = await req.json()
   if (!user_id || !package_id) {

@@ -3,15 +3,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { LogOut } from 'lucide-react'
 
-export default function TeacherHeader({ teacherName }: { teacherName: string }) {
+export default function TeacherHeader() {
   const router = useRouter()
 
   async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await fetch('/api/maestros/auth', { method: 'DELETE' })
     router.push('/maestros/login')
     router.refresh()
   }
@@ -26,16 +24,13 @@ export default function TeacherHeader({ teacherName }: { teacherName: string }) 
           <span className="text-stone-300">|</span>
           <span className="text-sm text-stone-500 font-medium">Portal Maestros</span>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-stone-600">{teacherName}</span>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 text-sm text-stone-400 hover:text-red-500 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Salir
-          </button>
-        </div>
+        <button
+          onClick={handleLogout}
+          className="inline-flex items-center gap-1.5 text-sm text-stone-400 hover:text-red-500 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Salir
+        </button>
       </div>
     </header>
   )
