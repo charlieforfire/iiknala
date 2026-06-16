@@ -125,7 +125,7 @@ export default function BuyButton({ formationId, hasPurchased, isLoggedIn }: Pro
         body: JSON.stringify({
           formationId,
           type: 'formation',
-          precio: 617700,
+          precio: 535400,
           nombre: 'iiknala YTT 200H — Pago en parcialidades (1 de 7)',
         }),
       })
@@ -149,7 +149,7 @@ export default function BuyButton({ formationId, hasPurchased, isLoggedIn }: Pro
           onClick={() => setShowModal(true)}
           className="w-full py-4 rounded-xl bg-[#4a6741] hover:bg-[#3a5232] text-white font-medium transition-colors"
         >
-          Pago de contado — $36,500 MXN
+          Pago de contado — $31,500 MXN
         </button>
 
         {/* Parcialidades — Stripe */}
@@ -158,7 +158,7 @@ export default function BuyButton({ formationId, hasPurchased, isLoggedIn }: Pro
           disabled={loading !== null}
           className="w-full py-3.5 rounded-xl border-2 border-[#4a6741] hover:bg-[#4a6741]/5 disabled:opacity-60 text-[#4a6741] font-medium transition-colors"
         >
-          {loading === 'parcialidades' ? 'Redirigiendo...' : 'Pago en parcialidades — 7 × $6,177 MXN'}
+          {loading === 'parcialidades' ? 'Redirigiendo...' : 'Pago en parcialidades — 7 × $5,354 MXN'}
         </button>
 
         {error && <p className="text-red-600 text-xs text-center">{error}</p>}
