@@ -14,15 +14,20 @@ export default async function DashboardPage() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: bookings }, { data: purchases }, { data: activePackage }, { data: allPackages }, { data: inviteCodes }, { data: guestCredits }] = await Promise.all([
+  const [{ data: bookings }, { data: purchases }, { data: allPackages }, { data: inviteCodes }, { data: guestCredits }] = await Promise.all([
     supabase.from('bookings').select('*, yoga_class:yoga_classes(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('purchases').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('user_packages').select('*').eq('user_id', user.id).eq('status', 'active')
-      .or(`expires_at.is.null,expires_at.gte.${today}`).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('user_packages').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('invite_codes').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('guest_class_credits').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
   ])
+
+  const pkgs = (allPackages ?? []) as any[]
+  const activePackages = pkgs.filter(p =>
+    p.status === 'active' &&
+    (!p.expires_at || p.expires_at >= today) &&
+    (p.classes_total === null || p.classes_total > p.classes_used)
+  )
 
   const name = user.user_metadata?.full_name ?? user.email
 
@@ -33,45 +38,48 @@ export default async function DashboardPage() {
         <p className="text-stone-500 mt-1">{user.email}</p>
       </div>
 
-      {/* Paquete activo */}
+      {/* Paquetes activos */}
       <section className="mb-12">
         <div className="flex items-center gap-3 mb-4">
           <Package className="w-5 h-5 text-[#4a6741]" />
-          <h2 className="text-xl font-medium text-stone-800">Mi paquete</h2>
+          <h2 className="text-xl font-medium text-stone-800">Paquetes activos</h2>
         </div>
-        {activePackage ? (
-          <div className="bg-[#eef2ec] border border-[#4a6741]/20 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <p className="font-semibold text-stone-800 text-lg">{activePackage.package_name}</p>
-              <p className="text-sm text-stone-500 mt-1">
-                {activePackage.classes_total === null
-                  ? 'Clases ilimitadas'
-                  : `${activePackage.classes_total - activePackage.classes_used} de ${activePackage.classes_total} clases restantes`
-                }
-                {activePackage.expires_at && ` · Vence el ${formatDate(activePackage.expires_at)}`}
-              </p>
-            </div>
-            {activePackage.classes_total !== null && (
-              <div className="w-full sm:w-48">
-                <div className="flex justify-between text-xs text-stone-500 mb-1">
-                  <span>Usadas</span>
-                  <span>{activePackage.classes_used}/{activePackage.classes_total}</span>
-                </div>
-                <div className="w-full bg-white rounded-full h-2">
-                  <div
-                    className="bg-[#4a6741] h-2 rounded-full"
-                    style={{ width: `${(activePackage.classes_used / activePackage.classes_total) * 100}%` }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
+        {activePackages.length === 0 ? (
           <div className="bg-stone-50 rounded-2xl border border-stone-200 border-dashed p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-stone-400">No tienes un paquete activo.</p>
+            <p className="text-stone-400">No tienes paquetes activos.</p>
             <Link href="/paquetes" className="bg-[#4a6741] hover:bg-[#3a5232] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
               Ver paquetes
             </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {activePackages.map((pkg: any) => (
+              <div key={pkg.id} className="bg-[#eef2ec] border border-[#4a6741]/20 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-stone-800 text-lg">{pkg.package_name}</p>
+                  <p className="text-sm text-stone-500 mt-1">
+                    {pkg.classes_total === null
+                      ? 'Clases ilimitadas'
+                      : `${pkg.classes_total - pkg.classes_used} de ${pkg.classes_total} clases restantes`}
+                    {pkg.expires_at && ` · Vence el ${formatDate(pkg.expires_at)}`}
+                  </p>
+                </div>
+                {pkg.classes_total !== null && (
+                  <div className="w-full sm:w-48 flex-shrink-0">
+                    <div className="flex justify-between text-xs text-stone-500 mb-1">
+                      <span>Usadas</span>
+                      <span>{pkg.classes_used}/{pkg.classes_total}</span>
+                    </div>
+                    <div className="w-full bg-white rounded-full h-2">
+                      <div
+                        className="bg-[#4a6741] h-2 rounded-full"
+                        style={{ width: `${(pkg.classes_used / pkg.classes_total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </section>
