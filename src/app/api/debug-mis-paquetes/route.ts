@@ -30,11 +30,23 @@ export async function GET(req: NextRequest) {
     today,
   }
 
-  // If session_id provided, attempt to re-insert the package
-  const sessionId = req.nextUrl.searchParams.get('session_id')
-  if (sessionId) {
+  // If session_id or payment_intent provided, attempt to re-insert the package
+  const rawId = req.nextUrl.searchParams.get('session_id') ?? req.nextUrl.searchParams.get('pi')
+  if (rawId) {
     try {
-      const session = await stripe.checkout.sessions.retrieve(sessionId)
+      let session
+      if (rawId.startsWith('pi_')) {
+        // Find checkout session by payment intent
+        const list = await stripe.checkout.sessions.list({ payment_intent: rawId, limit: 1 })
+        session = list.data[0]
+        if (!session) {
+          result.stripe_error = 'No se encontró una sesión de checkout para este payment intent'
+          return NextResponse.json(result)
+        }
+      } else {
+        session = await stripe.checkout.sessions.retrieve(rawId)
+      }
+      const sessionId = session.id
       result.stripe_session = {
         id: session.id,
         payment_status: session.payment_status,
