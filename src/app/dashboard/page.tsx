@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     supabase.from('bookings').select('*, yoga_class:yoga_classes(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('purchases').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('user_packages').select('*').eq('user_id', user.id).eq('status', 'active')
-      .or(`expires_at.is.null,expires_at.gte.${today}`).order('created_at', { ascending: true }).limit(1).maybeSingle(),
+      .or(`expires_at.is.null,expires_at.gte.${today}`).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('invite_codes').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('guest_class_credits').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
   ])
