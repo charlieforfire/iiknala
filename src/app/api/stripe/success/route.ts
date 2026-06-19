@@ -25,40 +25,42 @@ export async function GET(req: NextRequest) {
 
     if (type === 'class' && classId && userId) {
       const { data: existing } = await supabase
-        .from('bookings').select('id').eq('user_id', userId).eq('class_id', classId).single()
+        .from('bookings').select('id').eq('user_id', userId).eq('class_id', classId).maybeSingle()
 
       if (!existing) {
-        const { data: newBooking } = await supabase.from('bookings').insert({
+        const { data: newBooking, error: bookingErr } = await supabase.from('bookings').insert({
           user_id: userId, class_id: classId, status: 'confirmed',
           stripe_payment_intent: session.payment_intent as string,
         }).select('id').single()
 
-        const { data: cls } = await supabase.from('yoga_classes').select('enrolled, title, date, time, instructor').eq('id', classId).single()
-        if (cls) await supabase.from('yoga_classes').update({ enrolled: cls.enrolled + 1 }).eq('id', classId)
+        if (bookingErr) {
+          console.error('[stripe/success] booking insert error:', bookingErr)
+        } else {
+          const { data: cls } = await supabase.from('yoga_classes').select('enrolled, title, date, time, instructor').eq('id', classId).single()
+          if (cls) await supabase.from('yoga_classes').update({ enrolled: cls.enrolled + 1 }).eq('id', classId)
 
-        // Send booking confirmation email
-        if (newBooking && cls && session.customer_email) {
-          try {
-            const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 })
-            const authUser = users.find(u => u.id === userId)
-            const userName = authUser?.user_metadata?.full_name ?? session.customer_email?.split('@')[0] ?? 'Alumna'
-            const resend = getResend()
-            await resend.emails.send({
-              from: FROM,
-              to: session.customer_email,
-              subject: bookingConfirmedSubject(cls.title),
-              html: bookingConfirmedHtml({
-                userName,
-                classTitle: cls.title,
-                classDate: cls.date,
-                classTime: cls.time,
-                instructor: cls.instructor ?? '',
-                paymentMethod: session.payment_intent as string,
-                bookingId: newBooking.id,
-              }),
-            })
-          } catch (emailErr) {
-            console.error('Error sending booking email:', emailErr)
+          if (newBooking && cls && session.customer_email) {
+            try {
+              const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+              const authUser = users.find(u => u.id === userId)
+              const userName = authUser?.user_metadata?.full_name ?? session.customer_email?.split('@')[0] ?? 'Alumna'
+              await getResend().emails.send({
+                from: FROM,
+                to: session.customer_email,
+                subject: bookingConfirmedSubject(cls.title),
+                html: bookingConfirmedHtml({
+                  userName,
+                  classTitle: cls.title,
+                  classDate: cls.date,
+                  classTime: cls.time,
+                  instructor: cls.instructor ?? '',
+                  paymentMethod: session.payment_intent as string,
+                  bookingId: newBooking.id,
+                }),
+              })
+            } catch (emailErr) {
+              console.error('[stripe/success] booking email error:', emailErr)
+            }
           }
         }
       }
@@ -66,16 +68,19 @@ export async function GET(req: NextRequest) {
 
     if (type === 'paquete' && userId && paqueteId) {
       const { data: existing } = await supabase
-        .from('user_packages').select('id').eq('stripe_session_id', session.id).single()
+        .from('user_packages').select('id').eq('stripe_session_id', session.id).maybeSingle()
 
       if (!existing) {
-        const { data: pkgConfig } = await supabase
+        const { data: pkgConfig, error: pkgErr } = await supabase
           .from('packages')
-          .select('clases, vigencia_dias, is_shareable')
+          .select('nombre, clases, vigencia_dias, is_shareable')
           .eq('id', paqueteId)
-          .single()
+          .maybeSingle()
 
-        const classes = pkgConfig?.clases ?? 1
+        if (pkgErr) console.error('[stripe/success] package lookup error:', pkgErr)
+
+        const packageName = pkgConfig?.nombre ?? nombre ?? paqueteId
+        const classes = pkgConfig?.clases ?? null
         const days = pkgConfig?.vigencia_dias ?? null
         const shareable = pkgConfig?.is_shareable ?? false
 
@@ -83,10 +88,10 @@ export async function GET(req: NextRequest) {
           ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
           : null
 
-        const { data: newPkg } = await supabase.from('user_packages').insert({
+        const { data: newPkg, error: insertErr } = await supabase.from('user_packages').insert({
           user_id: userId,
           package_id: paqueteId,
-          package_name: nombre ?? paqueteId,
+          package_name: packageName,
           classes_total: classes,
           classes_used: 0,
           expires_at: expiresAt,
@@ -95,32 +100,36 @@ export async function GET(req: NextRequest) {
           is_shareable: shareable,
         }).select('id').single()
 
-        if (newPkg) {
-          const codesCount = inviteCodesForPackage(paqueteId)
-          await createInviteCodes(supabase, newPkg.id, userId, codesCount, expiresAt)
-        }
-
-        // Send package confirmation email
-        if (newPkg && session.customer_email) {
+        if (insertErr) {
+          console.error('[stripe/success] user_packages insert error:', insertErr)
+        } else if (newPkg) {
           try {
-            const { data: { user: authUser } } = await supabase.auth.admin.getUserById(userId)
-            const pkgUserName = authUser?.user_metadata?.full_name ?? session.customer_email.split('@')[0]
-            const resend = getResend()
-            await resend.emails.send({
-              from: FROM,
-              to: session.customer_email,
-              subject: packageConfirmedSubject(nombre ?? 'Paquete iiknala'),
-              html: packageConfirmedHtml({
-                userName: pkgUserName,
-                packageName: nombre ?? 'Paquete iiknala',
-                classesTotal: classes,
-                expiresAt,
-                paymentMethod: session.id,
-                packageId: newPkg.id,
-              }),
-            })
-          } catch (emailErr) {
-            console.error('Error sending package email:', emailErr)
+            const codesCount = inviteCodesForPackage(paqueteId)
+            await createInviteCodes(supabase, newPkg.id, userId, codesCount, expiresAt)
+          } catch (codeErr) {
+            console.error('[stripe/success] invite codes error:', codeErr)
+          }
+
+          if (session.customer_email) {
+            try {
+              const { data: { user: authUser } } = await supabase.auth.admin.getUserById(userId)
+              const pkgUserName = authUser?.user_metadata?.full_name ?? session.customer_email.split('@')[0]
+              await getResend().emails.send({
+                from: FROM,
+                to: session.customer_email,
+                subject: packageConfirmedSubject(packageName),
+                html: packageConfirmedHtml({
+                  userName: pkgUserName,
+                  packageName,
+                  classesTotal: classes,
+                  expiresAt,
+                  paymentMethod: session.id,
+                  packageId: newPkg.id,
+                }),
+              })
+            } catch (emailErr) {
+              console.error('[stripe/success] package email error:', emailErr)
+            }
           }
         }
       }
@@ -128,19 +137,18 @@ export async function GET(req: NextRequest) {
 
     if (type === 'formation' && userId) {
       const { data: existing } = await supabase
-        .from('purchases').select('id').eq('stripe_session_id', session.id).single()
+        .from('purchases').select('id').eq('stripe_session_id', session.id).maybeSingle()
       if (!existing) {
-        await supabase.from('purchases').insert({
+        const { error: formErr } = await supabase.from('purchases').insert({
           user_id: userId, formation_id: formationId ?? 'formacion-200h',
           stripe_session_id: session.id, status: 'completed',
         })
+        if (formErr) console.error('[stripe/success] formation insert error:', formErr)
       }
     }
   } catch (err) {
-    console.error('Error procesando pago:', err)
+    console.error('[stripe/success] unhandled error:', err)
   }
 
-  // Redirect to a client page so the browser re-establishes the auth session
-  // before landing on dashboard (avoids logout caused by cookie propagation in API redirects)
   return NextResponse.redirect(`${appUrl}/pago-exitoso`)
 }

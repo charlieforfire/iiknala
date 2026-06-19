@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         },
         quantity: 1,
       }],
-      metadata: { type: 'paquete', paqueteId, userId: user.id },
+      metadata: { type: 'paquete', paqueteId, userId: user.id, nombre: nombre ?? '' },
       success_url: `${appUrl}/api/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/paquetes`,
     })
