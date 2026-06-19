@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import { inviteCodesForPackage, createInviteCodes } from '@/lib/invite-codes'
+import { getResend, FROM } from '@/lib/resend'
+import { bookingConfirmedHtml, bookingConfirmedSubject } from '@/lib/emails/booking-confirmed'
+import { packageConfirmedHtml, packageConfirmedSubject } from '@/lib/emails/package-confirmed'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,12 +28,39 @@ export async function GET(req: NextRequest) {
         .from('bookings').select('id').eq('user_id', userId).eq('class_id', classId).single()
 
       if (!existing) {
-        await supabase.from('bookings').insert({
+        const { data: newBooking } = await supabase.from('bookings').insert({
           user_id: userId, class_id: classId, status: 'confirmed',
           stripe_payment_intent: session.payment_intent as string,
-        })
-        const { data: cls } = await supabase.from('yoga_classes').select('enrolled').eq('id', classId).single()
+        }).select('id').single()
+
+        const { data: cls } = await supabase.from('yoga_classes').select('enrolled, title, date, time, instructor').eq('id', classId).single()
         if (cls) await supabase.from('yoga_classes').update({ enrolled: cls.enrolled + 1 }).eq('id', classId)
+
+        // Send booking confirmation email
+        if (newBooking && cls && session.customer_email) {
+          try {
+            const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+            const authUser = users.find(u => u.id === userId)
+            const userName = authUser?.user_metadata?.full_name ?? session.customer_email?.split('@')[0] ?? 'Alumna'
+            const resend = getResend()
+            await resend.emails.send({
+              from: FROM,
+              to: session.customer_email,
+              subject: bookingConfirmedSubject(cls.title),
+              html: bookingConfirmedHtml({
+                userName,
+                classTitle: cls.title,
+                classDate: cls.date,
+                classTime: cls.time,
+                instructor: cls.instructor ?? '',
+                paymentMethod: session.payment_intent as string,
+                bookingId: newBooking.id,
+              }),
+            })
+          } catch (emailErr) {
+            console.error('Error sending booking email:', emailErr)
+          }
+        }
       }
     }
 
@@ -69,6 +99,30 @@ export async function GET(req: NextRequest) {
           const codesCount = inviteCodesForPackage(paqueteId)
           await createInviteCodes(supabase, newPkg.id, userId, codesCount, expiresAt)
         }
+
+        // Send package confirmation email
+        if (newPkg && session.customer_email) {
+          try {
+            const { data: { user: authUser } } = await supabase.auth.admin.getUserById(userId)
+            const pkgUserName = authUser?.user_metadata?.full_name ?? session.customer_email.split('@')[0]
+            const resend = getResend()
+            await resend.emails.send({
+              from: FROM,
+              to: session.customer_email,
+              subject: packageConfirmedSubject(nombre ?? 'Paquete iiknala'),
+              html: packageConfirmedHtml({
+                userName: pkgUserName,
+                packageName: nombre ?? 'Paquete iiknala',
+                classesTotal: classes,
+                expiresAt,
+                paymentMethod: session.id,
+                packageId: newPkg.id,
+              }),
+            })
+          } catch (emailErr) {
+            console.error('Error sending package email:', emailErr)
+          }
+        }
       }
     }
 
@@ -86,5 +140,7 @@ export async function GET(req: NextRequest) {
     console.error('Error procesando pago:', err)
   }
 
-  return NextResponse.redirect(`${appUrl}/dashboard?success=true`)
+  // Redirect to a client page so the browser re-establishes the auth session
+  // before landing on dashboard (avoids logout caused by cookie propagation in API redirects)
+  return NextResponse.redirect(`${appUrl}/pago-exitoso`)
 }
