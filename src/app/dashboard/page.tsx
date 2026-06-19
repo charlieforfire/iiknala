@@ -14,11 +14,12 @@ export default async function DashboardPage() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: bookings }, { data: purchases }, { data: activePackage }, { data: inviteCodes }, { data: guestCredits }] = await Promise.all([
+  const [{ data: bookings }, { data: purchases }, { data: activePackage }, { data: allPackages }, { data: inviteCodes }, { data: guestCredits }] = await Promise.all([
     supabase.from('bookings').select('*, yoga_class:yoga_classes(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('purchases').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('user_packages').select('*').eq('user_id', user.id).eq('status', 'active')
       .or(`expires_at.is.null,expires_at.gte.${today}`).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('user_packages').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('invite_codes').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('guest_class_credits').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
   ])
@@ -171,6 +172,37 @@ export default async function DashboardPage() {
               Tienes {(guestCredits as any[]).filter((c: any) => c.status === 'available').length} clase{(guestCredits as any[]).filter((c: any) => c.status === 'available').length > 1 ? 's' : ''} de invitado disponible{(guestCredits as any[]).filter((c: any) => c.status === 'available').length > 1 ? 's' : ''} 🎁
             </p>
             <p className="text-sm text-stone-500 mt-1">Ve a <Link href="/clases" className="text-[#4a6741] underline">Clases</Link> y reserva tu lugar.</p>
+          </div>
+        </section>
+      )}
+
+      {/* Historial de paquetes */}
+      {allPackages && allPackages.length > 0 && (
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-6">
+            <Package className="w-5 h-5 text-[#4a6741]" />
+            <h2 className="text-xl font-medium text-stone-800">Mis paquetes</h2>
+          </div>
+          <div className="flex flex-col gap-4">
+            {(allPackages as any[]).map((pkg) => {
+              const expired = pkg.expires_at && pkg.expires_at < today
+              const isActive = pkg.status === 'active' && !expired
+              return (
+                <div key={pkg.id} className={`bg-white rounded-2xl border p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isActive ? 'border-stone-200' : 'border-stone-100 opacity-60'}`}>
+                  <div>
+                    <p className="font-medium text-stone-800">{pkg.package_name}</p>
+                    <p className="text-sm text-stone-500 mt-0.5">
+                      {pkg.classes_total === null ? 'Clases ilimitadas' : `${pkg.classes_total - pkg.classes_used} de ${pkg.classes_total} clases restantes`}
+                      {pkg.expires_at && ` · Vence ${formatDate(pkg.expires_at)}`}
+                    </p>
+                    <p className="text-xs text-stone-400 mt-1">Comprado el {formatDate(pkg.created_at)}</p>
+                  </div>
+                  <span className={`text-xs font-medium px-3 py-1.5 rounded-full flex-shrink-0 ${isActive ? 'bg-emerald-100 text-[#4a6741]' : expired ? 'bg-stone-100 text-stone-400' : 'bg-stone-100 text-stone-400'}`}>
+                    {isActive ? 'Activo' : expired ? 'Vencido' : 'Inactivo'}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </section>
       )}
