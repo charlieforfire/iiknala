@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { CheckCircle2, Star } from 'lucide-react'
 import BuyButton from '@/components/formacion/BuyButton'
+import EarlyBirdPromo from '@/components/formacion/EarlyBirdPromo'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -409,6 +410,8 @@ export default async function FormacionPage() {
             </div>
           </div>
         </div>
+
+        <EarlyBirdPromo />
 
         {/* Métodos de pago + CTA */}
         <div className="mt-10 bg-white border border-stone-200 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8">
