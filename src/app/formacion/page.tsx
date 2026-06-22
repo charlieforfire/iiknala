@@ -245,7 +245,7 @@ export default async function FormacionPage() {
           </div>
           <div className="mt-10 flex justify-center">
             <a
-              href="https://drive.google.com/drive/folders/1CQiB508K8GBvbl3sHWEpXlvFZ1Pji7a1?usp=drive_link"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSc21NeZZKZFBZ5e7I8TCNZVzfzMBmZQTSOObshOHnVV2EFL1Q/viewform?usp=preview"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#4a6741] hover:bg-[#3a5232] text-white px-8 py-4 rounded-xl font-medium transition-colors text-base tracking-wide"
