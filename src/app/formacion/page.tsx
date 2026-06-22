@@ -13,6 +13,11 @@ export const metadata: Metadata = {
     title: 'Formación Profesores Yoga YTT 200H | iiknala Mérida',
     description: 'Certificación Yoga Alliance. YTT 200H Vinyasa Progresivo en Mérida, Yucatán. Conviértete en instructor de yoga.',
     url: 'https://www.iiknalayoga.com/formacion',
+    images: [{ url: '/hero.jpg', width: 1200, height: 800, alt: 'Formación de Profesores YTT 200H — iiknala Yoga Mérida' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/hero.jpg'],
   },
 }
 
