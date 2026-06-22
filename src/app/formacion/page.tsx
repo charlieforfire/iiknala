@@ -372,16 +372,12 @@ export default async function FormacionPage() {
           {/* Mensualidades */}
           <div className="bg-white border border-stone-200 rounded-2xl p-8 md:col-span-2">
             <p className="text-xs text-stone-400 uppercase tracking-wide mb-3">Pago en mensualidades</p>
-            <p className="text-5xl font-light text-stone-800 mb-1">$37,478</p>
+            <p className="text-5xl font-light text-stone-800 mb-1">$40,152</p>
             <p className="text-stone-400 text-sm mb-6">MXN · Total</p>
             <div className="flex flex-col gap-3 mb-8">
               <div className="flex justify-between text-sm border-b border-stone-100 pb-3">
                 <span className="text-stone-600">7 mensualidades de</span>
-                <span className="font-medium text-stone-800">$5,354 MXN</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-600">Diploma Yoga Alliance</span>
-                <span className="font-medium text-stone-800">$3,000 MXN</span>
+                <span className="font-medium text-stone-800">$5,736 MXN</span>
               </div>
             </div>
             <p className="text-xs text-stone-400">* Las mensualidades se pagan a lo largo de los 7 meses de formación.</p>
@@ -392,13 +388,13 @@ export default async function FormacionPage() {
           <div className="flex flex-col gap-4">
             <div className="bg-[#4a6741] text-white rounded-2xl p-7">
               <p className="text-xs text-white/70 uppercase tracking-wide mb-2">Pago de contado</p>
-              <p className="text-3xl font-light mb-1">$31,500</p>
+              <p className="text-3xl font-light mb-1">$36,018</p>
               <p className="text-white/70 text-sm mb-4">MXN · Efectivo o transferencia</p>
               <p className="text-xs text-white/60">Deberá realizarse antes del primer módulo.</p>
             </div>
             <div className="bg-white border border-stone-200 rounded-2xl p-7">
               <p className="text-xs text-stone-400 uppercase tracking-wide mb-2">Módulo individual</p>
-              <p className="text-3xl font-light text-stone-800 mb-1">$5,354</p>
+              <p className="text-3xl font-light text-stone-800 mb-1">$5,736</p>
               <p className="text-stone-400 text-sm">MXN · 3 días</p>
             </div>
           </div>
