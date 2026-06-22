@@ -124,6 +124,16 @@ export default async function FormacionPage() {
           <div className="mt-4 inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-1.5">
             <span className="text-white text-xs">Certificación Yoga Alliance</span>
           </div>
+          <div className="mt-6">
+            <a
+              href="https://docs.google.com/forms/d/e/1FAIpQLSc21NeZZKZFBZ5e7I8TCNZVzfzMBmZQTSOObshOHnVV2EFL1Q/viewform?usp=preview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-white hover:bg-stone-100 text-stone-800 px-8 py-4 rounded-xl font-medium transition-colors text-base tracking-wide"
+            >
+              Estoy interesad@
+            </a>
+          </div>
         </div>
       </div>
 
