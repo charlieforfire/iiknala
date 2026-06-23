@@ -17,6 +17,7 @@ export interface CatalogPackage {
   is_shareable: boolean
   nota: string | null
   sort_order: number
+  admin_only: boolean
 }
 
 type FormValues = Omit<CatalogPackage, 'id'>
@@ -352,9 +353,14 @@ export default function PackageCatalogManager({ initialPackages }: { initialPack
                   <p className="text-sm text-stone-700">{formatPrice(pkg.precio)}</p>
                   <p className="text-sm text-stone-500">{pkg.vigencia_dias ? `${pkg.vigencia_dias} días` : 'Sin venc.'}</p>
                   <p className="text-sm text-stone-500">{pkg.clases ?? 'Ilimitado'}</p>
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full w-fit ${pkg.activo ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'}`}>
-                    {pkg.activo ? 'Activo' : 'Inactivo'}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full w-fit ${pkg.activo ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'}`}>
+                      {pkg.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                    {pkg.admin_only && (
+                      <span className="text-xs font-medium px-2 py-1 rounded-full w-fit bg-purple-100 text-purple-700">Solo admin</span>
+                    )}
+                  </div>
                   <div className="flex gap-1 justify-end">
                     <button
                       onClick={() => startEdit(pkg)}

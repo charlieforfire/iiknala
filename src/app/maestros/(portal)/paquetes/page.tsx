@@ -15,6 +15,7 @@ export default async function PaquetesMaestrosPage() {
     .from('packages')
     .select('id, nombre, clases, vigencia_dias')
     .eq('activo', true)
+    .eq('admin_only', false)
     .order('sort_order')
 
   return (
