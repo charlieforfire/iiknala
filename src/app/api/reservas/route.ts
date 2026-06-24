@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { str, bool, ValidationError } from '@/lib/validate'
 
 const admin = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +13,23 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const { classId, guest = false } = await req.json()
+  let b: Record<string, unknown>
+  try {
+    b = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Cuerpo inválido' }, { status: 400 })
+  }
+
+  let classId: string
+  let guest: boolean
+  try {
+    classId = str(b.classId, { required: true, label: 'classId', maxLen: 100 })!
+    guest = bool(b.guest) ?? false
+  } catch (err) {
+    if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 })
+    return NextResponse.json({ error: 'Entrada inválida' }, { status: 400 })
+  }
+
   const spotsNeeded = guest ? 2 : 1
 
   const { data: existing } = await supabase
@@ -56,7 +73,6 @@ export async function POST(req: NextRequest) {
     }, { status: 400 })
   }
 
-  // Guest credit path (only single booking, no guest allowed)
   if (!activePkg || classesAvailable === 0) {
     const { data: guestCredit } = await supabase
       .from('guest_class_credits')
@@ -82,7 +98,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  // Package path
   const { error } = await supabase.from('bookings').insert({
     user_id: user.id, class_id: classId, status: 'confirmed',
     guest, classes_deducted: spotsNeeded,

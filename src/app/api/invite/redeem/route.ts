@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { str, ValidationError } from '@/lib/validate'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,13 +13,29 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Debes iniciar sesión para canjear un código' }, { status: 401 })
 
-  const { code } = await req.json()
-  if (!code) return NextResponse.json({ error: 'Código requerido' }, { status: 400 })
+  let rawCode: unknown
+  try {
+    const b = await req.json()
+    rawCode = b.code
+  } catch {
+    return NextResponse.json({ error: 'Cuerpo inválido' }, { status: 400 })
+  }
+
+  let code: string
+  try {
+    code = str(rawCode, { required: true, label: 'Código', maxLen: 20, minLen: 1 })!
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+    if (code.length < 1) throw new ValidationError('Código inválido')
+  } catch (err) {
+    if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 })
+    return NextResponse.json({ error: 'Código inválido' }, { status: 400 })
+  }
 
   const { data: invite } = await adminDb
     .from('invite_codes')
     .select('*')
-    .eq('code', code.toUpperCase().trim())
+    .eq('code', code)
     .single()
 
   if (!invite) return NextResponse.json({ error: 'Código no encontrado' }, { status: 404 })
@@ -30,7 +47,6 @@ export async function POST(req: NextRequest) {
     if (invite.expires_at < today) return NextResponse.json({ error: 'Este código ha expirado' }, { status: 400 })
   }
 
-  // Verificar que el usuario no tenga ya un crédito de este código
   const { data: existing } = await adminDb
     .from('guest_class_credits')
     .select('id')
@@ -38,7 +54,6 @@ export async function POST(req: NextRequest) {
     .single()
   if (existing) return NextResponse.json({ error: 'Este código ya fue canjeado' }, { status: 400 })
 
-  // Marcar el código como canjeado y crear el crédito en una transacción lógica
   await adminDb
     .from('invite_codes')
     .update({ status: 'redeemed', redeemed_by_user_id: user.id, redeemed_at: new Date().toISOString() })

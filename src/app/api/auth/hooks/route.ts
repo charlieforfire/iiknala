@@ -66,6 +66,14 @@ export async function POST(req: NextRequest) {
 
   const rawBody = await req.text()
 
+  if (hookSecret) {
+    const signature = req.headers.get('x-supabase-signature') ?? ''
+    const timestamp = req.headers.get('x-supabase-timestamp') ?? ''
+    if (!verifySignature(hookSecret, rawBody, signature, timestamp)) {
+      return NextResponse.json({ error: 'Firma inválida' }, { status: 401 })
+    }
+  }
+
   const body = JSON.parse(rawBody) as {
     user: { email: string; user_metadata?: { full_name?: string } }
     email_data: {

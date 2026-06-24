@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isAdminAuthed } from '@/lib/admin-auth'
+import { str, num, oneOf, bool, ValidationError } from '@/lib/validate'
 
 const db = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+const TIPOS = ['regular', 'ilimitado-multimes', 'rocket', 'summer'] as const
 
 export async function GET() {
   if (!await isAdminAuthed()) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
@@ -17,28 +20,40 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   if (!await isAdminAuthed()) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
-  const body = await req.json()
-  const { id, nombre, precio, vigencia_dias, clases, activo, destacado, tipo, extras, is_shareable, nota, sort_order } = body
-
-  if (!id || !nombre || !precio) {
-    return NextResponse.json({ error: 'id, nombre y precio son requeridos' }, { status: 400 })
+  let b: Record<string, unknown>
+  try {
+    b = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Cuerpo inválido' }, { status: 400 })
   }
 
-  const { data, error } = await db.from('packages').insert({
-    id,
-    nombre,
-    precio: Number(precio),
-    vigencia_dias: vigencia_dias ? Number(vigencia_dias) : null,
-    clases: clases ? Number(clases) : null,
-    activo: activo !== false,
-    destacado: !!destacado,
-    tipo: tipo ?? 'regular',
-    extras: extras ?? [],
-    is_shareable: !!is_shareable,
-    nota: nota || null,
-    sort_order: sort_order ? Number(sort_order) : 0,
-  }).select().single()
+  try {
+    const id = str(b.id, { required: true, label: 'id', maxLen: 80, minLen: 1 })!
+    if (!/^[a-z0-9-]+$/.test(id)) return NextResponse.json({ error: 'id solo puede contener letras minúsculas, números y guiones' }, { status: 400 })
+    const nombre = str(b.nombre, { required: true, label: 'nombre', maxLen: 120, minLen: 1 })!
+    const precio = num(b.precio, { required: true, label: 'precio', min: 0, max: 999999, integer: true })!
+    const vigencia_dias = num(b.vigencia_dias, { label: 'vigencia_dias', min: 1, max: 3650, integer: true })
+    const clases = num(b.clases, { label: 'clases', min: 1, max: 9999, integer: true })
+    const tipo = oneOf(b.tipo, TIPOS, { label: 'tipo' }) ?? 'regular'
+    const nota = str(b.nota, { label: 'nota', maxLen: 300 })
+    const sort_order = num(b.sort_order, { label: 'sort_order', min: 0, max: 9999, integer: true }) ?? 0
+    const activo = bool(b.activo) ?? true
+    const destacado = bool(b.destacado) ?? false
+    const is_shareable = bool(b.is_shareable) ?? false
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ package: data })
+    const extras = Array.isArray(b.extras)
+      ? (b.extras as unknown[]).slice(0, 10).map(e => String(e).slice(0, 100))
+      : []
+
+    const { data, error } = await db.from('packages').insert({
+      id, nombre, precio, vigencia_dias, clases, activo, destacado,
+      tipo, extras, is_shareable, nota, sort_order,
+    }).select().single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ package: data })
+  } catch (err) {
+    if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 })
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+  }
 }
