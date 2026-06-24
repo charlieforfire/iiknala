@@ -44,6 +44,7 @@ function emptyForm(): FormValues {
     is_shareable: false,
     nota: null,
     sort_order: 0,
+    admin_only: false,
   }
 }
 
