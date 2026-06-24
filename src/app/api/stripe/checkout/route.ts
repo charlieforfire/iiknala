@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { stripe } from '@/lib/stripe'
 import { str, oneOf, validationError, ValidationError } from '@/lib/validate'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 const adminDb = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,6 +19,8 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
+  if (!checkRateLimit(`checkout:${user.id}`, 10, 60_000)) return rateLimitResponse()
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 

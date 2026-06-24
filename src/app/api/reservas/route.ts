@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { str, bool, ValidationError } from '@/lib/validate'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 const admin = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +13,8 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
+  if (!checkRateLimit(`reservas:${user.id}`, 20, 60_000)) return rateLimitResponse()
 
   let b: Record<string, unknown>
   try {
