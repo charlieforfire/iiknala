@@ -76,7 +76,7 @@ export default function Footer() {
       </div>
       <div className="max-w-6xl mx-auto px-4 mt-10 border-t border-stone-800 pt-6 text-xs text-center space-y-1">
         <p>© {new Date().getFullYear()} iiknala. Todos los derechos reservados.</p>
-        <p className="text-stone-600">iiknala yoga web design by forxure.ia</p>
+        <p className="text-stone-600">iiknala yoga web design by line.movement</p>
       </div>
     </footer>
   )
